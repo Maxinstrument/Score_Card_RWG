@@ -753,10 +753,10 @@
   <section class="card clog-wrap">
     <div class="eyebrow"><span class="dot"></span><span>Client activity log</span></div>
     <h2>Weekly Opportunities</h2>
-    <p class="clog-pii-note">Client names are for your printed record only — never submitted. Each row is one opportunity.</p>
+    <p class="clog-pii-note">Each row is one opportunity. Log every client opportunity you worked this week.</p>
     <div class="clog-grid-head">
       <span>#</span>
-      <span>Client name <em class="clog-pii-tag">print only</em></span>
+      <span>Client name</span>
       <span>Product</span>
       <span>Opened</span>
       <span>$ Submitted</span>
@@ -1131,7 +1131,7 @@ try{ (function(){
     row.className = 'clog-row';
     row.innerHTML =
       '<span class="clog-n">'+rowCount+'</span>'+
-      '<input type="text" class="clog-name" placeholder="Client name (print only)" autocomplete="off">'+
+      '<input type="text" class="clog-name" placeholder="Client name" autocomplete="off">'+
       '<select class="clog-prod"><option value="">— product —</option>'+PRODUCT_OPTS+'</select>'+
       '<div class="clog-chk"><input type="checkbox" class="clog-opened"></div>'+
       '<div class="clog-mc"><input type="number" class="clog-sub" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>'+
