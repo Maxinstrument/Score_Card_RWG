@@ -1025,6 +1025,20 @@ function buildPayload(){
   p.weekly_min = WEEKLY_MIN;
   p.floor_cleared = pts >= WEEKLY_MIN;
   p.weighted_production = Math.round(wprod);
+
+  // Client activity log — one entry per opportunity row (manager's private record)
+  p.client_log = [];
+  document.querySelectorAll('#clogBody .clog-row').forEach(row=>{
+    const name   = row.querySelector('.clog-name').value.trim();
+    const prodId = row.querySelector('.clog-prod').value;
+    const opened = row.querySelector('.clog-opened').checked;
+    const sub    = parseFloat(row.querySelector('.clog-sub').value) || 0;
+    const clo    = parseFloat(row.querySelector('.clog-clo').value) || 0;
+    if(!name && !prodId && !sub && !clo) return; // skip empty rows
+    const prod = (TYPES.find(t=>t.id===prodId)||{}).name || "";
+    p.client_log.push({client:name, product:prod, opened:opened, submitted:sub, closed:clo});
+  });
+
   return p;
 }
 
