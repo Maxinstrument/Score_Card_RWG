@@ -902,7 +902,7 @@ const SOURCES = [
   { id:"haven",    label:"Haven Life",                 premium:500  },
   { id:"natural",  label:"Natural Market (affluent)",  premium:2000 },
   { id:"coi",      label:"COI/Referral",               premium:0    },
-  { id:"crossbiz", label:"Cross-Business (Fausto/A4)", premium:0    }
+  { id:"other",    label:"Other",                      premium:0    }
 ];
 const SOURCE_PREMIUM = {};
 SOURCES.forEach(s => { SOURCE_PREMIUM[s.id] = s.premium; });
@@ -1248,16 +1248,16 @@ function buildPayload(){
     const srcId  = row.querySelector('.clog-src').value;
     const prodId = row.querySelector('.clog-prod').value;
     const opened = row.querySelector('.clog-opened').checked;
+    const closed = row.querySelector('.clog-closed').checked;
     const prem   = parseFloat(row.querySelector('.clog-prem').value) || 0;
     const aum    = parseFloat(row.querySelector('.clog-aum').value)  || 0;
-    const sub    = parseFloat(row.querySelector('.clog-sub').value)  || 0;
-    const clo    = parseFloat(row.querySelector('.clog-clo').value)  || 0;
-    const closedFlag = row.querySelector('.clog-closed') ? row.querySelector('.clog-closed').checked : false;
-    if(!name && !srcId && !prodId && !sub && !clo && !prem && !aum && !closedFlag) return; // skip empty rows
+    const amt    = parseFloat(row.querySelector('.clog-amt').value)  || 0;
+    if(!name && !srcId && !prodId && !amt && !prem && !aum && !opened && !closed) return; // skip empty rows
     const prod = (TYPES.find(t=>t.id===prodId)||{}).name || "";
     const src  = (SOURCES.find(s=>s.id===srcId)||{}).label || "";
-    p.client_log.push({client:name, source:src, product:prod, opened:opened, closed_won:closedFlag,
-                       monthly_premium:prem, aum:aum, submitted:sub, closed:clo});
+    p.client_log.push({client:name, source:src, product:prod, opened:opened, closed:closed,
+                       monthly_premium:prem, aum:aum, amount:amt,
+                       submitted: opened?amt:0, closed_amount: closed?amt:0});
   });
 
   return p;
@@ -1359,15 +1359,17 @@ try{ (function(){
       '<div class="clog-field source"><label>Source</label><select class="clog-src"><option value="">— source —</option>'+SRC_OPTS+'</select></div>'+
       '<div class="clog-field product"><label>Product</label><select class="clog-prod"><option value="">— product —</option>'+PRODUCT_OPTS+'</select></div>'+
       '<div class="clog-field chk"><label>Opened</label><div class="clog-chk-box"><input type="checkbox" class="clog-opened"></div></div>'+
+      '<div class="clog-field chk"><label>Closed</label><div class="clog-chk-box"><input type="checkbox" class="clog-closed"></div></div>'+
       '<div class="clog-field num clog-partner"><label>Monthly prem.</label><div class="clog-mc"><input type="number" class="clog-prem" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>'+
       '<div class="clog-field num clog-partner"><label>AUM</label><div class="clog-mc"><input type="number" class="clog-aum" min="0" step="1" inputmode="decimal" placeholder="0"></div></div>'+
-      '<div class="clog-field num"><label>$ Submitted</label><div class="clog-mc"><input type="number" class="clog-sub" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>'+
-      '<div class="clog-field chk"><label>Closed</label><div class="clog-chk-box"><input type="checkbox" class="clog-closed"></div></div>'+
-      '<div class="clog-field num clog-partner"><label>$ Closed</label><div class="clog-mc"><input type="number" class="clog-clo" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>';
+      '<div class="clog-field num"><label>$ Amount</label><div class="clog-mc"><input type="number" class="clog-amt" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>';
 
-    row.querySelectorAll('select, input').forEach(el => el.addEventListener('input', recalcClientLog));
-    row.querySelector('.clog-opened').addEventListener('change', recalcClientLog);
-    row.querySelector('.clog-closed').addEventListener('change', recalcClientLog);
+    row.querySelectorAll('.clog-name, .clog-src, .clog-prod, .clog-prem, .clog-aum, .clog-amt')
+       .forEach(el => el.addEventListener('input', recalcClientLog));
+    const opChk = row.querySelector('.clog-opened');
+    const clChk = row.querySelector('.clog-closed');
+    opChk.addEventListener('change', function(){ if(opChk.checked) clChk.checked=false; recalcClientLog(); });
+    clChk.addEventListener('change', function(){ if(clChk.checked) opChk.checked=false; recalcClientLog(); });
 
     body.appendChild(row);
   }
@@ -1383,29 +1385,30 @@ try{ (function(){
       const prod   = row.querySelector('.clog-prod').value;
       const src    = row.querySelector('.clog-src').value;
       const opened = row.querySelector('.clog-opened').checked;
+      const closed = row.querySelector('.clog-closed').checked;
       const prem   = parseFloat(row.querySelector('.clog-prem').value) || 0;
       const aum    = parseFloat(row.querySelector('.clog-aum').value)  || 0;
-      const sub    = parseFloat(row.querySelector('.clog-sub').value)  || 0;
-      const clo    = parseFloat(row.querySelector('.clog-clo').value)  || 0;
-      const closed = row.querySelector('.clog-closed') ? row.querySelector('.clog-closed').checked : (clo>0);
+      const amt    = parseFloat(row.querySelector('.clog-amt').value)  || 0;
 
       // Source-driven potential premium (associate hero number)
       if(src && SOURCE_PREMIUM[src]) potentialPremium += SOURCE_PREMIUM[src];
 
       // Partner premium / FYC / AUM / big-case
-      premiumPipeline += prem;
-      if(sub > 0) premiumWritten += prem;
       aumTotal += aum;
       if(fyc(prem) >= CONFIG.BIG_CASE_FYC) bigCaseCount++;
+      if(opened){ premiumWritten += prem; premiumPipeline += prem; }
       if(closed){ closedFycSum += fyc(prem); closedFycN++; }
 
-      // Product mix (needs a product to attribute)
+      // Product mix. Single amount routes to opened or closed by state.
       if(!prod) return;
-      if(opened) totals[prod].count++;
-      if(sub > 0) totals[prod].submittedCount++;
-      totals[prod].sub += sub;
-      if(closed) totals[prod].closedCount++;
-      totals[prod].clo += clo;
+      if(opened){
+        totals[prod].count++;
+        if(amt > 0){ totals[prod].submittedCount++; totals[prod].sub += amt; }
+      }
+      if(closed){
+        totals[prod].closedCount++;
+        totals[prod].clo += amt;
+      }
     });
 
     TYPES.forEach(t => {
