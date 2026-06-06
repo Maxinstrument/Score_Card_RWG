@@ -1247,17 +1247,19 @@ function buildPayload(){
     const name   = row.querySelector('.clog-name').value.trim();
     const srcId  = row.querySelector('.clog-src').value;
     const prodId = row.querySelector('.clog-prod').value;
-    const opened = row.querySelector('.clog-opened').checked;
-    const closed = row.querySelector('.clog-closed').checked;
+    const opened    = row.querySelector('.clog-opened').checked;
+    const submitted = row.querySelector('.clog-submitted').checked;
+    const closed    = row.querySelector('.clog-closed').checked;
     const prem   = parseFloat(row.querySelector('.clog-prem').value) || 0;
     const aum    = parseFloat(row.querySelector('.clog-aum').value)  || 0;
     const amt    = parseFloat(row.querySelector('.clog-amt').value)  || 0;
-    if(!name && !srcId && !prodId && !amt && !prem && !aum && !opened && !closed) return; // skip empty rows
+    if(!name && !srcId && !prodId && !amt && !prem && !aum && !opened && !submitted && !closed) return; // skip empty rows
     const prod = (TYPES.find(t=>t.id===prodId)||{}).name || "";
     const src  = (SOURCES.find(s=>s.id===srcId)||{}).label || "";
-    p.client_log.push({client:name, source:src, product:prod, opened:opened, closed:closed,
+    p.client_log.push({client:name, source:src, product:prod,
+                       opened:opened, submitted:submitted, closed:closed,
                        monthly_premium:prem, aum:aum, amount:amt,
-                       submitted: opened?amt:0, closed_amount: closed?amt:0});
+                       submitted_amount: submitted?amt:0, closed_amount: closed?amt:0});
   });
 
   return p;
@@ -1359,6 +1361,7 @@ try{ (function(){
       '<div class="clog-field source"><label>Source</label><select class="clog-src"><option value="">— source —</option>'+SRC_OPTS+'</select></div>'+
       '<div class="clog-field product"><label>Product</label><select class="clog-prod"><option value="">— product —</option>'+PRODUCT_OPTS+'</select></div>'+
       '<div class="clog-field chk"><label>Opened</label><div class="clog-chk-box"><input type="checkbox" class="clog-opened"></div></div>'+
+      '<div class="clog-field chk"><label>Submitted</label><div class="clog-chk-box"><input type="checkbox" class="clog-submitted"></div></div>'+
       '<div class="clog-field chk"><label>Closed</label><div class="clog-chk-box"><input type="checkbox" class="clog-closed"></div></div>'+
       '<div class="clog-field num clog-partner"><label>Monthly prem.</label><div class="clog-mc"><input type="number" class="clog-prem" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>'+
       '<div class="clog-field num clog-partner"><label>AUM</label><div class="clog-mc"><input type="number" class="clog-aum" min="0" step="1" inputmode="decimal" placeholder="0"></div></div>'+
@@ -1367,9 +1370,12 @@ try{ (function(){
     row.querySelectorAll('.clog-name, .clog-src, .clog-prod, .clog-prem, .clog-aum, .clog-amt')
        .forEach(el => el.addEventListener('input', recalcClientLog));
     const opChk = row.querySelector('.clog-opened');
+    const suChk = row.querySelector('.clog-submitted');
     const clChk = row.querySelector('.clog-closed');
-    opChk.addEventListener('change', function(){ if(opChk.checked) clChk.checked=false; recalcClientLog(); });
-    clChk.addEventListener('change', function(){ if(clChk.checked) opChk.checked=false; recalcClientLog(); });
+    function exclusive(sel){ [opChk,suChk,clChk].forEach(function(c){ if(c!==sel) c.checked=false; }); recalcClientLog(); }
+    opChk.addEventListener('change', function(){ exclusive(opChk); });
+    suChk.addEventListener('change', function(){ exclusive(suChk); });
+    clChk.addEventListener('change', function(){ exclusive(clChk); });
 
     body.appendChild(row);
   }
@@ -1382,13 +1388,14 @@ try{ (function(){
         bigCaseCount=0, closedFycSum=0, closedFycN=0;
 
     body.querySelectorAll('.clog-row').forEach(row => {
-      const prod   = row.querySelector('.clog-prod').value;
-      const src    = row.querySelector('.clog-src').value;
-      const opened = row.querySelector('.clog-opened').checked;
-      const closed = row.querySelector('.clog-closed').checked;
-      const prem   = parseFloat(row.querySelector('.clog-prem').value) || 0;
-      const aum    = parseFloat(row.querySelector('.clog-aum').value)  || 0;
-      const amt    = parseFloat(row.querySelector('.clog-amt').value)  || 0;
+      const prod      = row.querySelector('.clog-prod').value;
+      const src       = row.querySelector('.clog-src').value;
+      const opened    = row.querySelector('.clog-opened').checked;
+      const submitted = row.querySelector('.clog-submitted').checked;
+      const closed    = row.querySelector('.clog-closed').checked;
+      const prem      = parseFloat(row.querySelector('.clog-prem').value) || 0;
+      const aum       = parseFloat(row.querySelector('.clog-aum').value)  || 0;
+      const amt       = parseFloat(row.querySelector('.clog-amt').value)  || 0;
 
       // Source-driven potential premium (associate hero number)
       if(src && SOURCE_PREMIUM[src]) potentialPremium += SOURCE_PREMIUM[src];
@@ -1396,19 +1403,15 @@ try{ (function(){
       // Partner premium / FYC / AUM / big-case
       aumTotal += aum;
       if(fyc(prem) >= CONFIG.BIG_CASE_FYC) bigCaseCount++;
-      if(opened){ premiumWritten += prem; premiumPipeline += prem; }
+      if(submitted){ premiumWritten += prem; }
+      if(opened || submitted){ premiumPipeline += prem; }
       if(closed){ closedFycSum += fyc(prem); closedFycN++; }
 
-      // Product mix. Single amount routes to opened or closed by state.
+      // Product mix. One state per row: Opened, Submitted, or Closed.
       if(!prod) return;
-      if(opened){
-        totals[prod].count++;
-        if(amt > 0){ totals[prod].submittedCount++; totals[prod].sub += amt; }
-      }
-      if(closed){
-        totals[prod].closedCount++;
-        totals[prod].clo += amt;
-      }
+      if(opened) totals[prod].count++;
+      if(submitted){ totals[prod].submittedCount++; totals[prod].sub += amt; }
+      if(closed){ totals[prod].closedCount++; totals[prod].clo += amt; }
     });
 
     TYPES.forEach(t => {
