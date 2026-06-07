@@ -1066,7 +1066,10 @@ const PREMIUM_PER_AUM    = 1/500;
 const AGENT_GOALS = {
   "Jesus Zamora":         { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:500,  firmShare:1.0 },
   "Maryurie Estrada":     { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:500,  firmShare:1.0 },
-  "Nelson Mompierre Jr.": { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:1000, firmShare:0.5 }
+  "Nelson Mompierre Jr.": { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:1000, firmShare:0.5 },
+  // Partners — placeholder targets (same as associates for now; refine for bigger-client hunting)
+  "Carlos A Temperan":    { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:500,  firmShare:1.0 },
+  "Alejandro Mendieta":   { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:500,  firmShare:1.0 }
 };
 
 function fyc(monthlyPremium){ return monthlyPremium * 12 * CONFIG.COMMISSION_RATE; }
@@ -1559,13 +1562,11 @@ function renderMyWeek(){
   const fmt = function(n){ return "$"+Math.round(n||0).toLocaleString("en-US"); };
   const setTxt = function(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; };
 
-  // Four numbers. Partners (Carlos/Alex) see the whole team's totals; agents see their own.
-  const numAgent = document.getElementById("agent").value;
-  const isPartnerCard = roleOf(numAgent) === "partner";
-  setTxt("n_open", (isPartnerCard ? (GOALS.teamOpen||0) : (num("opp_open")||0)).toString());
-  setTxt("n_fycsub", fmt(isPartnerCard ? GOALS.teamFycSub : GOALS.fycSubmitted));
-  setTxt("n_aumsub", fmt(isPartnerCard ? GOALS.teamAumSub : GOALS.aumSubmitted));
-  setTxt("n_revclosed", fmt(isPartnerCard ? GOALS.teamRevClosed : GOALS.revenueClosed));
+  // Four numbers — everyone sees their own week (Carlos/Alex included).
+  setTxt("n_open", (num("opp_open")||0).toString());
+  setTxt("n_fycsub", fmt(GOALS.fycSubmitted));
+  setTxt("n_aumsub", fmt(GOALS.aumSubmitted));
+  setTxt("n_revclosed", fmt(GOALS.revenueClosed));
 
   const card = document.getElementById("myweek");
   const body = document.getElementById("mw_goals");
