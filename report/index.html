@@ -97,6 +97,8 @@
   table.grid td:first-child, table.grid th:first-child{ text-align:left; }
   table.grid tfoot td{ font-weight:700; background:#FBF8F0; }
   .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .report-cols{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+  @media (max-width:760px){ .report-cols{ grid-template-columns:1fr; } }
   .rev-cell{ background:var(--field); border:1px solid var(--line); border-radius:9px; padding:11px 13px; }
   .rev-cell span{ font-size:10.5px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); font-weight:700; display:block; }
   .rev-cell b{ font-family:'Fraunces',serif; font-size:20px; color:var(--navy); }
@@ -357,8 +359,9 @@ function renderSnapshot(person, week){
     '<div class="mw-num"><span>FYC submitted</span><b>'+money(st.fycSub)+'</b></div>'+
     '<div class="mw-num"><span>AUM submitted</span><b>'+money(st.aumSub)+'</b></div>'+
     '<div class="mw-num"><span>Revenue closed</span><b>'+money(st.revClosed)+'</b></div></div>';
-  return '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Live snapshot</span></div>'+card+nums+'</section>' +
-    renderRevenue(st) + renderMix(st) + renderCasesList(casesFor(week, person));
+  const snapCard = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Live snapshot</span></div>'+card+nums+'</section>';
+  return '<div class="report-cols"><div>'+renderMix(st)+'</div><div>'+snapCard+'</div></div>' +
+    renderRevenue(st) + renderCasesList(casesFor(week, person));
 }
 
 function renderRevenue(st){
