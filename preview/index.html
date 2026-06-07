@@ -598,13 +598,13 @@
   .tc-status{font-size:12.5px;color:var(--muted);}
   .tc-list{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
   .tc-head{
-    display:grid;grid-template-columns:1.4fr 1fr .8fr .9fr .9fr .9fr auto;gap:10px;
+    display:grid;grid-template-columns:1.3fr .9fr .7fr .85fr .85fr .85fr .9fr auto;gap:10px;
     padding:0 12px 4px;font-size:10px;letter-spacing:.5px;text-transform:uppercase;
     color:var(--muted);font-weight:700;
   }
   @media (max-width:640px){ .tc-head{display:none;} }
   .tc-row{
-    display:grid;grid-template-columns:1.4fr 1fr .8fr .9fr .9fr .9fr auto;
+    display:grid;grid-template-columns:1.3fr .9fr .7fr .85fr .85fr .85fr .9fr auto;
     gap:10px;align-items:center;
     padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--field);
     font-size:13px;
@@ -630,6 +630,12 @@
   .tc-mc::before{content:"$";position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none;}
   .tc-mc input{padding-left:16px !important;width:100%;}
   #tcAddBtn{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+  #tcCancelBtn{background:transparent;color:var(--muted);border:1px solid var(--line-strong);border-radius:8px;padding:10px 14px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;margin-left:8px;}
+  .tc-actions{display:flex;gap:6px;justify-content:flex-end;}
+  .tc-actions button{font-size:11px;font-weight:700;border-radius:6px;padding:5px 9px;cursor:pointer;font-family:inherit;border:1px solid var(--line-strong);background:#fff;color:var(--navy);}
+  .tc-actions .tc-edit:hover{background:var(--field);}
+  .tc-actions .tc-del{color:var(--warn);border-color:rgba(176,105,31,.4);}
+  .tc-actions .tc-del:hover{background:rgba(176,105,31,.08);}
   #tcAddBtn:hover{filter:brightness(1.12);}
   @media (max-width:640px){
     .tc-add-grid{grid-template-columns:1fr 1fr;}
@@ -902,7 +908,7 @@
         </select>
         <div class="tc-mc"><input type="number" id="tcAmount" min="0" step="0.01" inputmode="decimal" placeholder="Amount"></div>
         <div class="tc-mc"><input type="number" id="tcAum" min="0" step="1" inputmode="decimal" placeholder="AUM"></div>
-        <button type="button" id="tcAddBtn">Add case</button>
+        <button type="button" id="tcAddBtn">Add case</button><button type="button" id="tcCancelBtn" style="display:none;">Cancel</button>
       </div>
       <div id="tcAddStatus" class="tc-status"></div>
     </div>
@@ -1641,22 +1647,31 @@ function postCase(payload, done){
 
   const statusEl = document.getElementById("tcStatus");
   const listEl   = document.getElementById("tcList");
+  let editingId = null;
+  let currentCases = [];
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]; }); }
   function money(n){ return "$"+Math.round(n||0).toLocaleString("en-US"); }
 
   function render(cases){
-    if(!cases.length){ listEl.innerHTML=""; statusEl.textContent="No cases logged yet for this week."; return; }
-    statusEl.textContent = cases.length + " case" + (cases.length>1?"s":"") + " this week";
-    const head = '<div class="tc-head"><span>Client</span><span>Product</span><span>State</span><span>Source</span><span class="tc-money">$ Amount</span><span class="tc-money">AUM</span><span>Agent</span></div>';
-    listEl.innerHTML = head + cases.map(function(c){
+    currentCases = cases || [];
+    if(!currentCases.length){ listEl.innerHTML=""; statusEl.textContent="No cases logged yet for this week."; return; }
+    statusEl.textContent = currentCases.length + " case" + (currentCases.length>1?"s":"") + " this week";
+    const isPartner = document.body.classList.contains("role-partner");
+    const head = '<div class="tc-head"><span>Client</span><span>Product</span><span>State</span><span>Source</span><span class="tc-money">$ Amount</span><span class="tc-money">AUM</span><span>Agent</span><span></span></div>';
+    listEl.innerHTML = head + currentCases.map(function(c){
       const st = c.state || "";
       return '<div class="tc-row">'+
-        '<span class="tc-c-name">'+(c.client_name||"(no name)")+'</span>'+
-        '<span>'+(c.product||"")+'</span>'+
-        '<span class="tc-pill '+st+'">'+st+'</span>'+
-        '<span class="tc-agent">'+(c.source||"")+'</span>'+
+        '<span class="tc-c-name">'+esc(c.client_name||"(no name)")+'</span>'+
+        '<span>'+esc(c.product||"")+'</span>'+
+        '<span class="tc-pill '+st+'">'+esc(st)+'</span>'+
+        '<span class="tc-agent">'+esc(c.source||"")+'</span>'+
         '<span class="tc-money">'+money(c.amount)+'</span>'+
         '<span class="tc-money">'+(c.aum? money(c.aum):"-")+'</span>'+
-        '<span class="tc-agent">'+(c.submitting_agent||"")+'</span>'+
+        '<span class="tc-agent">'+esc(c.submitting_agent||"")+'</span>'+
+        '<span class="tc-actions">'+
+          '<button type="button" class="tc-edit" data-id="'+esc(c.record_id)+'">Edit</button>'+
+          (isPartner ? '<button type="button" class="tc-del" data-id="'+esc(c.record_id)+'">Del</button>' : "")+
+        '</span>'+
       '</div>';
     }).join("");
   }
@@ -1672,32 +1687,80 @@ function postCase(payload, done){
   }
   document.getElementById("tcLoadBtn").addEventListener("click", load);
 
+  // Edit / delete via event delegation on the list
+  listEl.addEventListener("click", function(e){
+    const ed = e.target.closest(".tc-edit");
+    const dl = e.target.closest(".tc-del");
+    if(ed) startEdit(ed.getAttribute("data-id"));
+    else if(dl) doDelete(dl.getAttribute("data-id"));
+  });
+
+  function startEdit(id){
+    const c = currentCases.find(function(x){ return String(x.record_id)===String(id); });
+    if(!c) return;
+    document.getElementById("tcClient").value = c.client_name || "";
+    const se = SOURCES.find(function(s){ return s.label===c.source; }); srcSel.value  = se ? se.id : "";
+    const pe = TYPES.find(function(t){ return t.name===c.product; });   prodSel.value = pe ? pe.id : "";
+    document.getElementById("tcState").value  = c.state || "Opened";
+    document.getElementById("tcAmount").value = c.amount || "";
+    document.getElementById("tcAum").value    = c.aum || "";
+    editingId = c.record_id;
+    document.getElementById("tcAddBtn").textContent = "Save changes";
+    document.getElementById("tcCancelBtn").style.display = "";
+    document.getElementById("tcAddStatus").textContent = "Editing " + (c.client_name||"case") + " ...";
+    document.getElementById("tcClient").focus();
+    document.getElementById("tcClient").scrollIntoView({block:"center"});
+  }
+
+  function resetAddForm(){
+    editingId = null;
+    document.getElementById("tcClient").value="";
+    document.getElementById("tcAmount").value="";
+    document.getElementById("tcAum").value="";
+    srcSel.value=""; prodSel.value=""; document.getElementById("tcState").value="Opened";
+    document.getElementById("tcAddBtn").textContent="Add case";
+    document.getElementById("tcCancelBtn").style.display="none";
+  }
+  document.getElementById("tcCancelBtn").addEventListener("click", function(){ resetAddForm(); document.getElementById("tcAddStatus").textContent=""; });
+
+  function doDelete(id){
+    const c = currentCases.find(function(x){ return String(x.record_id)===String(id); });
+    const label = c ? (c.client_name||"this case") : "this case";
+    if(!window.confirm("Delete " + label + "? This cannot be undone.")) return;
+    document.getElementById("tcAddStatus").textContent="Deleting...";
+    postCase({ action:"deleteCase", record_id:id, passphrase:PARTNER_PASSPHRASE }, function(ok){
+      if(ok){ document.getElementById("tcAddStatus").textContent="Deleted."; setTimeout(load, 900); }
+      else { document.getElementById("tcAddStatus").textContent="Delete failed."; }
+    });
+  }
   document.getElementById("tcAddBtn").addEventListener("click", function(){
     const week  = document.getElementById("week").value;
     const agent = document.getElementById("agent").value;
     const addStatus = document.getElementById("tcAddStatus");
+    const isEdit = !!editingId;
     if(!week){  addStatus.textContent="Pick a week first."; return; }
-    if(!agent){ addStatus.textContent="Select your name first."; return; }
+    if(!agent && !isEdit){ addStatus.textContent="Select your name first."; return; }
     const client = document.getElementById("tcClient").value.trim();
     if(!client){ addStatus.textContent="Enter a client name."; return; }
-    const newId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ("id-"+Date.now()+"-"+Math.random().toString(36).slice(2));
+    const orig = isEdit ? currentCases.find(function(x){ return String(x.record_id)===String(editingId); }) : null;
+    const id = isEdit ? editingId : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ("id-"+Date.now()+"-"+Math.random().toString(36).slice(2)));
     const payload = {
-      action:"createCase", record_id:newId,
-      week_ending:week, submitting_agent:agent, client_name:client,
+      action: isEdit ? "updateCase" : "createCase", record_id:id,
+      week_ending:week,
+      submitting_agent: (isEdit && orig && orig.submitting_agent) ? orig.submitting_agent : agent,
+      client_name:client,
       source:(SOURCES.find(function(s){return s.id===srcSel.value;})||{}).label || "",
       product:(TYPES.find(function(t){return t.id===prodSel.value;})||{}).name || "",
       state:document.getElementById("tcState").value,
       amount:parseFloat(document.getElementById("tcAmount").value)||0,
       aum:parseFloat(document.getElementById("tcAum").value)||0,
-      agent_involved:"None"
+      agent_involved: (isEdit && orig && orig.agent_involved) ? orig.agent_involved : "None"
     };
-    addStatus.textContent="Saving...";
+    addStatus.textContent = isEdit ? "Updating..." : "Saving...";
     postCase(payload, function(ok){
       if(ok){
-        addStatus.textContent="Saved.";
-        document.getElementById("tcClient").value="";
-        document.getElementById("tcAmount").value="";
-        document.getElementById("tcAum").value="";
+        addStatus.textContent = isEdit ? "Updated." : "Saved.";
+        resetAddForm();
         setTimeout(load, 900);
       } else { addStatus.textContent="Save failed (check connection)."; }
     });
