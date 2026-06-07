@@ -94,6 +94,8 @@
   table.grid{ width:100%; border-collapse:collapse; font-size:13px; }
   table.grid th, table.grid td{ border:1px solid var(--line); padding:7px 9px; text-align:center; }
   table.grid th{ background:var(--navy); color:#fff; font-weight:600; font-size:11.5px; }
+  th.cs-sort{ cursor:pointer; user-select:none; white-space:nowrap; }
+  th.cs-sort:hover{ color:var(--gold-soft); }
   table.grid td:first-child, table.grid th:first-child{ text-align:left; }
   table.grid tfoot td{ font-weight:700; background:#FBF8F0; }
   .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -443,13 +445,36 @@ function renderMix(st){
     '<tfoot><tr><td>Total</td><td>'+tOp+'</td><td>'+tSubN+'</td><td>'+money(tSub)+'</td><td>'+tClN+'</td><td>'+money(tCl)+'</td></tr></tfoot></table></div></section>';
 }
 
+let casesSortKey=null, casesSortDir=1;
+const CASES_COLS = [
+  {label:"Client", key:"client_name"},
+  {label:"Source", key:"source"},
+  {label:"Product", key:"product"},
+  {label:"State", key:"state"},
+  {label:"$ Amount", key:"amount", num:true},
+  {label:"AUM", key:"aum", num:true},
+  {label:"Agent", key:"submitting_agent"}
+];
 function renderCasesList(cases){
   if(!cases.length) return '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Cases this week</span></div><p style="color:var(--muted);font-size:13px;">No cases logged.</p></section>';
-  const rows = cases.map(function(c){
+  let view = cases.slice();
+  if(casesSortKey){
+    const isNum = CASES_COLS.some(function(c){ return c.key===casesSortKey && c.num; });
+    view.sort(function(a,b){
+      if(isNum) return (num(a[casesSortKey]) - num(b[casesSortKey])) * casesSortDir;
+      const va=String(a[casesSortKey]||"").toLowerCase(), vb=String(b[casesSortKey]||"").toLowerCase();
+      return va<vb ? -casesSortDir : (va>vb ? casesSortDir : 0);
+    });
+  }
+  const th = CASES_COLS.map(function(col){
+    const arrow = (casesSortKey===col.key) ? (casesSortDir>0?' ▲':' ▼') : '';
+    return '<th class="cs-sort" data-sort="'+col.key+'">'+col.label+arrow+'</th>';
+  }).join('');
+  const rows = view.map(function(c){
     return '<tr><td>'+esc(c.client_name)+'</td><td>'+esc(c.source)+'</td><td>'+esc(c.product)+'</td><td>'+esc(c.state)+'</td><td>'+money(num(c.amount))+'</td><td>'+(num(c.aum)?money(num(c.aum)):'')+'</td><td>'+esc(c.submitting_agent)+'</td></tr>';
   }).join("");
   return '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Cases this week</span></div>'+
-    '<div class="tscroll"><table class="grid"><thead><tr><th>Client</th><th>Source</th><th>Product</th><th>State</th><th>$ Amount</th><th>AUM</th><th>Agent</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+    '<div class="tscroll"><table class="grid"><thead><tr>'+th+'</tr></thead><tbody>'+rows+'</tbody></table></div></section>';
 }
 
 /* ── Team report ─────────────────────────────────────────── */
@@ -520,6 +545,13 @@ function renderAll(){
 
 /* ── Wire up ─────────────────────────────────────────────── */
 document.getElementById("weekSel").addEventListener("change", render);
+document.getElementById("report-body").addEventListener("click", function(e){
+  const h = e.target.closest(".cs-sort");
+  if(!h) return;
+  const k = h.getAttribute("data-sort");
+  if(casesSortKey===k) casesSortDir = -casesSortDir; else { casesSortKey = k; casesSortDir = 1; }
+  render();
+});
 document.getElementById("whoSel").addEventListener("change", render);
 document.getElementById("refresh").addEventListener("click", loadData);
 document.getElementById("printThis").addEventListener("click", function(){
