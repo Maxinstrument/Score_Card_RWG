@@ -1589,7 +1589,7 @@ function renderMyWeek(){
     cnt("New business submitted",     num("nb_written"),goals.nbSub),
     cnt("New business closed",        num("nb_closed"), goals.nbClosed),
     { label:"Premium closed", val:premClosed, target:goals.closePremium, disp:fmt(premClosed)+" / "+fmt(goals.closePremium),
-      note:"to firm goal: "+fmt(premClosed*(goals.firmShare||1)) }
+      note:"to your goal: "+fmt(premClosed*(goals.firmShare||1)) }
   ];
 
   let met = 0;
