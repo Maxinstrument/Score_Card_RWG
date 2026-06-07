@@ -715,31 +715,6 @@
   </div>
 </header>
 
-<!-- Partner scoreboard (gated: partner role + second passphrase) -->
-<div class="wrap partner-only" id="partner-scoreboard">
-  <section class="card sb-card">
-    <div class="eyebrow"><span class="dot"></span><span>Partner Scoreboard · Chairman's Club 2026</span><span class="sb-weekno" id="sb_weekno">Week — of 25</span></div>
-    <div class="sb-grid">
-      <div class="sb-cell"><div class="sb-k">FYC this week</div><div class="sb-v" id="sb_fyc_week">$0</div></div>
-      <div class="sb-cell"><div class="sb-k">FYC year-to-date</div><div class="sb-v sb-edit"><input type="number" id="sb_ytd_input" placeholder="160000"></div></div>
-      <div class="sb-cell"><div class="sb-k">Pace to date</div><div class="sb-v" id="sb_pace">$0</div></div>
-      <div class="sb-cell"><div class="sb-k">Gap to pace</div><div class="sb-v" id="sb_gap">$0</div></div>
-      <div class="sb-cell"><div class="sb-k">Club goal (combined)</div><div class="sb-v" id="sb_goal">$1,000,000</div></div>
-    </div>
-    <div class="sb-premium">
-      <div class="sb-prem-row"><span>Monthly premium written this week (combined target)</span><span><b id="sb_premium_week">$0</b> / <span id="sb_premium_target">$6,000</span></span></div>
-      <div class="bar"><div class="bar-fill" id="sb_premium_bar"></div></div>
-    </div>
-    <div class="sb-grid sb-grid-3">
-      <div class="sb-cell"><div class="sb-k">Big cases ($20k+ FYC)</div><div class="sb-v" id="sb_bigcase">0</div></div>
-      <div class="sb-cell"><div class="sb-k">Pipeline potential FYC</div><div class="sb-v" id="sb_pipeline_fyc">$0</div></div>
-      <div class="sb-cell"><div class="sb-k">Avg FYC / closed case</div><div class="sb-v" id="sb_avg_fyc">$0</div></div>
-      <div class="sb-cell"><div class="sb-k">AUM brought in</div><div class="sb-v" id="sb_aum">$0</div></div>
-    </div>
-    <p class="sb-note">FYC = revenue on Whole Life, Term, and Disability (closed cases). Premium is derived at 50% of revenue for WL, DI, LTC. YTD is editable; pace assumes $6,000/week of premium across the 25-week sprint.</p>
-  </section>
-</div>
-
 <div class="wrap">
   <div class="layout">
 
@@ -1521,6 +1496,19 @@ function recalcFromCases(){
   if(rsi) rsi.value = totalSub || "";
   if(rci) rci.value = totalClo || "";
 
+  // Team-wide totals (partner cards show the whole team's numbers)
+  let teamOpen=0, teamFycSub=0, teamAumSub=0, teamRevClosed=0;
+  (window.currentTeamCases||[]).forEach(function(c){
+    const pid = (TYPES.find(function(t){return t.name===c.product;})||{}).id;
+    const a = Number(c.amount)||0, au = Number(c.aum)||0, s = c.state;
+    const f = pid ? rowFyc(pid, a) : 0;
+    if(s==="Opened") teamOpen++;
+    if(s==="Submitted"){ teamFycSub += f; teamAumSub += au; }
+    if(s==="Closed") teamRevClosed += a;
+  });
+  GOALS.teamOpen = teamOpen; GOALS.teamFycSub = teamFycSub;
+  GOALS.teamAumSub = teamAumSub; GOALS.teamRevClosed = teamRevClosed;
+
   GOALS.potentialPremium = potentialPremium;
   GOALS.premiumWritten   = premiumWritten;
   GOALS.premiumPipeline  = premiumPipeline;
@@ -1542,11 +1530,13 @@ function renderMyWeek(){
   const fmt = function(n){ return "$"+Math.round(n||0).toLocaleString("en-US"); };
   const setTxt = function(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; };
 
-  // Four numbers, every agent
-  setTxt("n_open", (num("opp_open")||0).toString());
-  setTxt("n_fycsub", fmt(GOALS.fycSubmitted));
-  setTxt("n_aumsub", fmt(GOALS.aumSubmitted));
-  setTxt("n_revclosed", fmt(GOALS.revenueClosed));
+  // Four numbers. Partners (Carlos/Alex) see the whole team's totals; agents see their own.
+  const numAgent = document.getElementById("agent").value;
+  const isPartnerCard = roleOf(numAgent) === "partner";
+  setTxt("n_open", (isPartnerCard ? (GOALS.teamOpen||0) : (num("opp_open")||0)).toString());
+  setTxt("n_fycsub", fmt(isPartnerCard ? GOALS.teamFycSub : GOALS.fycSubmitted));
+  setTxt("n_aumsub", fmt(isPartnerCard ? GOALS.teamAumSub : GOALS.aumSubmitted));
+  setTxt("n_revclosed", fmt(isPartnerCard ? GOALS.teamRevClosed : GOALS.revenueClosed));
 
   const card = document.getElementById("myweek");
   const body = document.getElementById("mw_goals");
