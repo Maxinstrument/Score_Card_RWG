@@ -858,17 +858,6 @@
         <!-- hidden placeholders kept so existing recalc money refs stay safe -->
         <span hidden><b id="wfyc"></b><b id="wclosed"></b><b id="wsub"></b></span>
 
-        <h2 style="margin:6px 0 14px;">This week</h2>
-        <div class="metric"><span class="k">Opportunities per held appt</span><span class="v num" id="r_opp">—<span class="tgt" id="r_opp_t"></span></span></div>
-        <div class="metric assoc-only"><span class="k">Set rate<br><span style="font-size:11px;">closing appts set / opps opened</span></span><span class="v num" id="r_set">—<span class="tgt" id="r_set_t"></span></span></div>
-        <div class="metric partner-only"><span class="k">Close rate<br><span style="font-size:11px;">closed / closing held</span></span><span class="v num" id="r_close">—<span class="tgt" id="r_close_t"></span></span></div>
-        <div class="metric"><span class="k">Pipeline set for ahead<br><span style="font-size:11px;">first + closing appts scheduled</span></span><span class="v num" id="r_pipeline">—</span></div>
-        <p class="trailing-note">Show rate and placement rate run on a timing lag (you schedule now, hold later), so they live on the manager dashboard as 4-week trends, best pulled from A360 appointment cohorts.</p>
-
-        <div class="recon ok" id="recon">
-          <span id="reconIcon">&#10003;</span>
-          <div id="reconText">Numbers tie out.</div>
-        </div>
 
         <button class="btn primary" id="btnSubmit">Submit week</button>
         <button class="btn ghost no-print" id="btnPrint">Print weekly worksheet</button>
@@ -1304,12 +1293,6 @@ function recalc(){
   // this-week signals. Cross-stage show rates are deliberately NOT computed
   // same-week: scheduling runs ahead of holding, so a same-week ratio is noise.
   // True show rate and placement rate are trailing metrics on the dashboard.
-  const oppPer = faHeld>0 ? opp/faHeld : null;
-  setRatio("r_opp","r_opp_t", oppPer, RATIO_TARGETS.oppPerHeld, function(v){return v.toFixed(2)+"\u00D7";});
-  const setR = opp>0 ? caSched/opp : null;
-  setRatio("r_set","r_set_t", setR, RATIO_TARGETS.setRate, function(v){return Math.round(v*100)+"%";});
-  $("r_close").textContent    = pct(nb, caHeld);
-  $("r_pipeline").textContent = (faSched + caSched).toLocaleString("en-US");
 
   // by-type totals + weighted production
   let tc=0, ts=0, tcl=0, wprod=0;
@@ -1330,16 +1313,6 @@ function recalc(){
 
   renderMyWeek();
 
-  // reconciliation
-  const problems = [];
-
-  const recon=$("recon"), icon=$("reconIcon"), text=$("reconText");
-  if(problems.length===0){
-    recon.className="recon ok"; icon.innerHTML="&#10003;"; text.textContent="Numbers tie out.";
-  } else {
-    recon.className="recon bad"; icon.innerHTML="&#9888;";
-    text.innerHTML="Check these:<ul><li>"+problems.join("</li><li>")+"</li></ul>";
-  }
 }
 
 document.body.addEventListener("input", recalc);
