@@ -128,6 +128,28 @@
     .report-section{ page-break-after:always; }
     .report-section:last-child{ page-break-after:auto; }
   }
+  .print-header{ display:none; }
+  @media print{
+    .print-header{ display:flex !important; align-items:center; gap:14px; padding:2px 0 8px; border-bottom:2px solid var(--gold); margin-bottom:12px; }
+    .print-header img{ height:42px; width:auto; object-fit:contain; }
+    .print-header .ph-brand{ font-family:'Fraunces',serif; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--navy); margin:0 0 2px; }
+    .print-header .ph-slogan{ font-size:10px; color:var(--gold); font-style:italic; margin:0; }
+    .cases-page{ page-break-before:always; }
+    body{ font-size:10px; }
+    .card{ padding:9px 11px; margin-bottom:7px; border:1px solid #ddd; }
+    .person-title{ font-size:18px; margin:0 0 8px; }
+    h2{ font-size:14px; margin:0 0 6px; }
+    .eyebrow{ margin-bottom:4px; }
+    .eyebrow span{ font-size:9px; }
+    .myweek{ padding:9px 11px; }
+    .mw-goal{ margin-bottom:4px; }
+    .mw-g-top{ font-size:10px; margin-bottom:2px; }
+    .mw-bar{ height:4px; }
+    .mw-num b{ font-size:14px; }
+    .mw-num span{ font-size:8px; }
+    .rev-cell b{ font-size:15px; }
+    table.grid th, table.grid td{ padding:3px 5px; font-size:9.5px; }
+  }
 </style>
 </head>
 <body>
@@ -329,7 +351,7 @@ function renderClub(week){
 }
 
 /* ── My Week goals + four numbers for a person ───────────── */
-function renderSnapshot(person, week){
+function renderSnapshot(person, week, mode){
   const st = caseStats(casesFor(week, person));
   const wk = weeklyFor(week, person);
   const g = AGENT_GOALS[person] || {};
@@ -360,6 +382,10 @@ function renderSnapshot(person, week){
     '<div class="mw-num"><span>AUM submitted</span><b>'+money(st.aumSub)+'</b></div>'+
     '<div class="mw-num"><span>Revenue closed</span><b>'+money(st.revClosed)+'</b></div></div>';
   const snapCard = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Live snapshot</span></div>'+card+nums+'</section>';
+  if(mode==="print"){
+    return '<h2 class="person-title">'+esc(person)+'</h2>' + snapCard + renderMix(st) + renderRevenue(st) +
+      '<div class="cases-page">' + renderCasesList(casesFor(week, person)) + '</div>';
+  }
   return '<div class="report-cols"><div>'+renderMix(st)+renderRevenue(st)+'</div><div>'+snapCard+'</div></div>' +
     renderCasesList(casesFor(week, person));
 }
@@ -442,12 +468,19 @@ function render(){
   document.getElementById("report-body").innerHTML = html;
 }
 
+function printHeader(){
+  const logo = (document.getElementById("gate-logo")||{}).src || "";
+  return '<div class="print-header"><img src="'+logo+'" alt="RWG"><div>'+
+    '<p class="ph-brand">Resilient Wealth Group</p>'+
+    '<p class="ph-slogan">Wealth, Conducted with Purpose</p></div></div>';
+}
+
 /* ── Print all: every person + team, page-broken ─────────── */
 function renderAll(){
   const week = document.getElementById("weekSel").value;
-  let html = '<div class="report-section">'+renderClub(week)+'<h2 class="person-title">Entire Team</h2>'+renderTeam(week)+'</div>';
+  let html = '<div class="report-section">'+printHeader()+renderClub(week)+'<h2 class="person-title">Entire Team</h2>'+renderTeam(week)+'</div>';
   PEOPLE.forEach(function(p){
-    html += '<div class="report-section"><h2 class="person-title">'+esc(p)+'</h2>'+renderSnapshot(p, week)+'</div>';
+    html += '<div class="report-section">'+printHeader()+renderSnapshot(p, week, "print")+'</div>';
   });
   return html;
 }
@@ -456,7 +489,19 @@ function renderAll(){
 document.getElementById("weekSel").addEventListener("change", render);
 document.getElementById("whoSel").addEventListener("change", render);
 document.getElementById("refresh").addEventListener("click", loadData);
-document.getElementById("printThis").addEventListener("click", function(){ window.print(); });
+document.getElementById("printThis").addEventListener("click", function(){
+  const who = document.getElementById("whoSel").value;
+  const week = document.getElementById("weekSel").value;
+  const body = document.getElementById("report-body");
+  const saved = body.innerHTML;
+  if(who==="__team__"){
+    body.innerHTML = printHeader()+renderClub(week)+'<h2 class="person-title">Entire Team</h2>'+renderTeam(week);
+  } else {
+    body.innerHTML = printHeader()+renderSnapshot(who, week, "print");
+  }
+  window.print();
+  setTimeout(function(){ body.innerHTML = saved; }, 1500);
+});
 document.getElementById("printAll").addEventListener("click", function(){
   const body = document.getElementById("report-body");
   const saved = body.innerHTML;
