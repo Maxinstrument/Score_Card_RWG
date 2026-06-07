@@ -1074,9 +1074,9 @@ function rowPremium(prodId, amt){ return PREMIUM_PRODUCTS.indexOf(prodId)>=0 ? a
 const PREMIUM_PER_AMOUNT = 1/6;
 const PREMIUM_PER_AUM    = 1/500;
 const AGENT_GOALS = {
-  "Jesus Zamora":         { firstMtgs:5, opps:2, closingMtgs:2, closePremium:500,  firmShare:1.0 },
-  "Maryurie Estrada":     { firstMtgs:5, opps:2, closingMtgs:2, closePremium:500,  firmShare:1.0 },
-  "Nelson Mompierre Jr.": { firstMtgs:5, opps:2, closingMtgs:2, closePremium:1000, firmShare:0.5 }
+  "Jesus Zamora":         { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:500,  firmShare:1.0 },
+  "Maryurie Estrada":     { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:500,  firmShare:1.0 },
+  "Nelson Mompierre Jr.": { firstSched:7, firstHeld:5, opps:2, closingSched:2, closingRun:2, nbSub:1, nbClosed:1, closePremium:1000, firmShare:0.5 }
 };
 
 function fyc(monthlyPremium){ return monthlyPremium * 12 * CONFIG.COMMISSION_RATE; }
@@ -1590,16 +1590,17 @@ function renderMyWeek(){
   if(!goals){ card.style.display = "none"; return; }   // partners: no minimums card
   card.style.display = "";
 
-  const firstMtgs  = num("fa_sched");
-  const opps       = num("opp_open");
-  const closeMtgs  = num("ca_sched");
   const premClosed = GOALS.premiumEquivClosed || 0;
-
+  function cnt(label, val, target){ return { label:label, val:val, target:target, disp:val+" / "+target }; }
   const rows = [
-    { label:"First meetings scheduled",   val:firstMtgs, target:goals.firstMtgs,   disp:firstMtgs+" / "+goals.firstMtgs },
-    { label:"Opportunities opened",       val:opps,      target:goals.opps,        disp:opps+" / "+goals.opps },
-    { label:"Closing meetings scheduled", val:closeMtgs, target:goals.closingMtgs, disp:closeMtgs+" / "+goals.closingMtgs },
-    { label:"Premium closed",             val:premClosed,target:goals.closePremium,disp:fmt(premClosed)+" / "+fmt(goals.closePremium),
+    cnt("First meetings scheduled",   num("fa_sched"),  goals.firstSched),
+    cnt("First meetings held",        num("fa_held"),   goals.firstHeld),
+    cnt("Opportunities opened",       num("opp_open"),  goals.opps),
+    cnt("Closing meetings scheduled", num("ca_sched"),  goals.closingSched),
+    cnt("Closing meetings run",       num("ca_held"),   goals.closingRun),
+    cnt("New business submitted",     num("nb_written"),goals.nbSub),
+    cnt("New business closed",        num("nb_closed"), goals.nbClosed),
+    { label:"Premium closed", val:premClosed, target:goals.closePremium, disp:fmt(premClosed)+" / "+fmt(goals.closePremium),
       note:"to firm goal: "+fmt(premClosed*(goals.firmShare||1)) }
   ];
 
