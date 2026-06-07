@@ -255,8 +255,8 @@
   .gold-divider::after{background:linear-gradient(to left,transparent,var(--gold-soft));}
   .gold-divider span{color:var(--gold);font-size:11px;white-space:nowrap;opacity:.7;}
 
-  /* Daily tally card — print-only: hidden on SCREEN only, so print always shows it */
-  @media screen { #daily{ display:none; } }
+  /* Daily tally card — hidden on screen via JS class; removed right before printing */
+  .daily-hidden{ display:none !important; }
   .daily{margin-top:8px;}
   .daily-grid,.cw-grid{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
   .daily-grid th,.daily-grid td,.cw-grid th,.cw-grid td{border:1px solid var(--line-strong);padding:9px 8px;text-align:center;}
@@ -1540,11 +1540,16 @@ function recalcFromCases(){
   recalcGoals();
   recalc();
 }
+// Hide the Daily Tally / worksheet on screen; reveal it only for printing.
+const dailyEl = document.getElementById("daily");
+if(dailyEl) dailyEl.classList.add("daily-hidden");
 $("btnPrint").addEventListener("click", () => {
+  if(dailyEl) dailyEl.classList.remove("daily-hidden");  // show for the print render
   document.body.classList.add("print-tally");
   window.print();
   window.addEventListener("afterprint", () => {
     document.body.classList.remove("print-tally");
+    if(dailyEl) dailyEl.classList.add("daily-hidden");    // hide again on screen
   }, { once: true });
 });
 
