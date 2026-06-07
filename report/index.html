@@ -360,8 +360,8 @@ function renderSnapshot(person, week){
     '<div class="mw-num"><span>AUM submitted</span><b>'+money(st.aumSub)+'</b></div>'+
     '<div class="mw-num"><span>Revenue closed</span><b>'+money(st.revClosed)+'</b></div></div>';
   const snapCard = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Live snapshot</span></div>'+card+nums+'</section>';
-  return '<div class="report-cols"><div>'+renderMix(st)+'</div><div>'+snapCard+'</div></div>' +
-    renderRevenue(st) + renderCasesList(casesFor(week, person));
+  return '<div class="report-cols"><div>'+renderMix(st)+renderRevenue(st)+'</div><div>'+snapCard+'</div></div>' +
+    renderCasesList(casesFor(week, person));
 }
 
 function renderRevenue(st){
