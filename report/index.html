@@ -117,14 +117,18 @@
 
   @media print{
     @page{ size:letter portrait; margin:.4in; }
-    body{ background:#fff; }
+    body{ background:#fff; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .no-print{ display:none !important; }
     .masthead{ background:#fff; color:var(--navy); }
-    .club{ background:#fff; color:var(--navy); border:1px solid #ccc; }
-    .club .eyebrow span,.club-k{ color:var(--muted); }
-    .club-cell{ background:#fafafa; border:1px solid #ddd; }
-    .club-v,.club-bar-row,.club-bar-row b,.club-note{ color:var(--navy) !important; }
-    .bar{ background:#eee; }
+    .club{ background:linear-gradient(160deg,#0E2440,#0A1A30) !important; color:#fff !important; border:1px solid rgba(194,161,77,.4) !important; }
+    .club .eyebrow span{ color:var(--gold-soft) !important; }
+    .club-k{ color:rgba(255,255,255,.55) !important; }
+    .club-cell{ background:rgba(255,255,255,.06) !important; border:1px solid rgba(194,161,77,.18) !important; }
+    .club-v,.club-bar-row,.club-bar-row b,.club-note{ color:#fff !important; }
+    .bar{ background:rgba(255,255,255,.14) !important; }
+    .card{ page-break-inside:avoid; }
+    .pbreak{ page-break-before:always; }
     .report-section{ page-break-after:always; }
     .report-section:last-child{ page-break-after:auto; }
   }
@@ -481,7 +485,7 @@ function renderTeam(week){
   }).join("");
   const leadCard = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>By person this week</span></div>'+
     '<div class="tscroll"><table class="lead"><thead><tr><th>Agent</th><th>Goals</th><th>Opps</th><th>Subm.</th><th>Closed</th><th>Premium</th><th>FYC closed</th><th>AUM</th></tr></thead><tbody>'+lead+'</tbody></table></div></section>';
-  return totals + leadCard + renderMix(all) + renderCasesList(casesFor(week, null));
+  return totals + leadCard + '<div class="pbreak">'+renderMix(all)+'</div>' + renderCasesList(casesFor(week, null));
 }
 
 /* ── Render the current selection ────────────────────────── */
