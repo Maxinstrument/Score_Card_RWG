@@ -624,6 +624,10 @@
   }
   .tc-add{border-top:1px solid var(--line);padding-top:16px;}
   .tc-add-h{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:var(--navy);margin:0 0 12px;}
+  .tc-submitter-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;
+    background:rgba(194,161,77,.08);border:1px solid rgba(194,161,77,.3);border-radius:8px;padding:10px 12px;}
+  .tc-submitter-row label{font-size:12.5px;font-weight:700;color:var(--navy);}
+  .tc-submitter-row select{padding:8px 10px;font-size:13px;min-width:210px;}
   .tc-add-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr .9fr .9fr .9fr auto;gap:8px;align-items:center;}
   .tc-add-grid input,.tc-add-grid select{padding:9px 10px;font-size:13px;}
   .tc-mc{position:relative;}
@@ -897,6 +901,7 @@
 
     <div class="tc-add">
       <h3 class="tc-add-h">Add a case to the shared store</h3>
+      <div class="tc-submitter-row partner-only"><label for="tcSubmitter">Credit this case to (the agent you worked it with):</label><select id="tcSubmitter"></select></div>
       <div class="tc-add-grid">
         <input type="text" id="tcClient" placeholder="Client name" autocomplete="off">
         <select id="tcSource"></select>
@@ -1645,6 +1650,18 @@ function postCase(payload, done){
   if(srcSel)  srcSel.innerHTML  = '<option value="">- source -</option>'  + SOURCES.map(function(s){return '<option value="'+s.id+'">'+s.label+'</option>';}).join("");
   if(prodSel) prodSel.innerHTML = '<option value="">- product -</option>' + TYPES.map(function(t){return '<option value="'+t.id+'">'+t.name+'</option>';}).join("");
 
+  const submitterSel = document.getElementById("tcSubmitter");
+  if(submitterSel){
+    submitterSel.innerHTML = Object.keys(ROLE_MAP).map(function(n){ return '<option value="'+n+'">'+n+'</option>'; }).join("");
+  }
+  function syncSubmitterDefault(){
+    if(submitterSel && !editingId){
+      const a = document.getElementById("agent").value;
+      if(a) submitterSel.value = a;
+    }
+  }
+  const agentSel0 = document.getElementById("agent");
+  if(agentSel0) agentSel0.addEventListener("change", syncSubmitterDefault);
   const statusEl = document.getElementById("tcStatus");
   const listEl   = document.getElementById("tcList");
   let editingId = null;
@@ -1704,6 +1721,7 @@ function postCase(payload, done){
     document.getElementById("tcState").value  = c.state || "Opened";
     document.getElementById("tcAmount").value = c.amount || "";
     document.getElementById("tcAum").value    = c.aum || "";
+    if(submitterSel && c.submitting_agent) submitterSel.value = c.submitting_agent;
     editingId = c.record_id;
     document.getElementById("tcAddBtn").textContent = "Save changes";
     document.getElementById("tcCancelBtn").style.display = "";
@@ -1718,6 +1736,7 @@ function postCase(payload, done){
     document.getElementById("tcAmount").value="";
     document.getElementById("tcAum").value="";
     srcSel.value=""; prodSel.value=""; document.getElementById("tcState").value="Opened";
+    if(submitterSel){ const a=document.getElementById("agent").value; if(a) submitterSel.value=a; }
     document.getElementById("tcAddBtn").textContent="Add case";
     document.getElementById("tcCancelBtn").style.display="none";
   }
@@ -1744,10 +1763,14 @@ function postCase(payload, done){
     if(!client){ addStatus.textContent="Enter a client name."; return; }
     const orig = isEdit ? currentCases.find(function(x){ return String(x.record_id)===String(editingId); }) : null;
     const id = isEdit ? editingId : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ("id-"+Date.now()+"-"+Math.random().toString(36).slice(2)));
+    let submitter;
+    if(document.body.classList.contains("role-partner") && submitterSel && submitterSel.value){ submitter = submitterSel.value; }
+    else if(isEdit && orig && orig.submitting_agent){ submitter = orig.submitting_agent; }
+    else { submitter = agent; }
     const payload = {
       action: isEdit ? "updateCase" : "createCase", record_id:id,
       week_ending:week,
-      submitting_agent: (isEdit && orig && orig.submitting_agent) ? orig.submitting_agent : agent,
+      submitting_agent: submitter,
       client_name:client,
       source:(SOURCES.find(function(s){return s.id===srcSel.value;})||{}).label || "",
       product:(TYPES.find(function(t){return t.id===prodSel.value;})||{}).name || "",
