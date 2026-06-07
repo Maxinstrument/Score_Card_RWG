@@ -597,8 +597,14 @@
   .tc-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
   .tc-status{font-size:12.5px;color:var(--muted);}
   .tc-list{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+  .tc-head{
+    display:grid;grid-template-columns:1.4fr 1fr .8fr .9fr .9fr .9fr auto;gap:10px;
+    padding:0 12px 4px;font-size:10px;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--muted);font-weight:700;
+  }
+  @media (max-width:640px){ .tc-head{display:none;} }
   .tc-row{
-    display:grid;grid-template-columns:1.4fr 1fr .9fr .9fr 1fr auto;
+    display:grid;grid-template-columns:1.4fr 1fr .8fr .9fr .9fr .9fr auto;
     gap:10px;align-items:center;
     padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--field);
     font-size:13px;
@@ -1640,7 +1646,8 @@ function postCase(payload, done){
   function render(cases){
     if(!cases.length){ listEl.innerHTML=""; statusEl.textContent="No cases logged yet for this week."; return; }
     statusEl.textContent = cases.length + " case" + (cases.length>1?"s":"") + " this week";
-    listEl.innerHTML = cases.map(function(c){
+    const head = '<div class="tc-head"><span>Client</span><span>Product</span><span>State</span><span>Source</span><span class="tc-money">$ Amount</span><span class="tc-money">AUM</span><span>Agent</span></div>';
+    listEl.innerHTML = head + cases.map(function(c){
       const st = c.state || "";
       return '<div class="tc-row">'+
         '<span class="tc-c-name">'+(c.client_name||"(no name)")+'</span>'+
@@ -1648,6 +1655,7 @@ function postCase(payload, done){
         '<span class="tc-pill '+st+'">'+st+'</span>'+
         '<span class="tc-agent">'+(c.source||"")+'</span>'+
         '<span class="tc-money">'+money(c.amount)+'</span>'+
+        '<span class="tc-money">'+(c.aum? money(c.aum):"-")+'</span>'+
         '<span class="tc-agent">'+(c.submitting_agent||"")+'</span>'+
       '</div>';
     }).join("");
