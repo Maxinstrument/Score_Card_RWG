@@ -255,8 +255,8 @@
   .gold-divider::after{background:linear-gradient(to left,transparent,var(--gold-soft));}
   .gold-divider span{color:var(--gold);font-size:11px;white-space:nowrap;opacity:.7;}
 
-  /* Daily tally card — print-only (hidden on screen, shown when printing) */
-  #daily{display:none;}
+  /* Daily tally card — print-only: hidden on SCREEN only, so print always shows it */
+  @media screen { #daily{ display:none; } }
   .daily{margin-top:8px;}
   .daily-grid,.cw-grid{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
   .daily-grid th,.daily-grid td,.cw-grid th,.cw-grid td{border:1px solid var(--line-strong);padding:9px 8px;text-align:center;}
