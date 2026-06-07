@@ -1042,7 +1042,7 @@ const SOURCES = [
   { id:"high_risk",   label:"High Risk Member",          premium:2000 },
   { id:"haven",       label:"Haven Life",                premium:500  },
   { id:"natural",     label:"Natural Market (affluent)", premium:2000 },
-  { id:"coi",         label:"COI/Referral",              premium:0    },
+  { id:"coi",         label:"COI/Referral",              premium:1000 },
   { id:"current",     label:"Current Client",            premium:0    },
   { id:"other",       label:"Other",                     premium:0    }
 ];
@@ -1512,7 +1512,7 @@ function recalcFromCases(){
     const aum = Number(c.aum)||0;
     const st  = c.state;
 
-    if(srcId && SOURCE_PREMIUM[srcId]) potentialPremium += SOURCE_PREMIUM[srcId];
+    if(st==="Opened" && srcId && SOURCE_PREMIUM[srcId]) potentialPremium += SOURCE_PREMIUM[srcId];
     aumTotal += aum;
     const rf = prodId ? rowFyc(prodId, amt) : 0;
     const rp = prodId ? rowPremium(prodId, amt) : 0;
