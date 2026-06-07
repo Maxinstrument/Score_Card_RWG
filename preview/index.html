@@ -783,7 +783,6 @@
           <div class="frow"><div class="step">5</div><div class="flabel">Closing appointments held<small>The closing meeting actually happened</small></div><input type="number" id="ca_held" min="0" inputmode="numeric" placeholder="0"></div>
           <div class="frow"><div class="step">6</div><div class="flabel">New business submitted<small>Calculated from client activity log</small></div><input type="number" id="nb_written" readonly class="calc" placeholder="—"></div>
           <div class="frow"><div class="step">7</div><div class="flabel">New business closed<small>Calculated from client activity log</small></div><input type="number" id="nb_closed" readonly class="calc" placeholder="—"></div>
-          <div class="frow"><div class="step">8</div><div class="flabel">Flawless A360 profiles completed<small>Full info, tasks set, future opportunities logged</small></div><input type="number" id="a360" min="0" inputmode="numeric" placeholder="0"></div>
         </div>
       </section>
 
@@ -897,7 +896,6 @@
         <tr><td>Closing appts held</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr><td>New business submitted</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr><td>New business closed</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>A360 profiles completed</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
       </tbody>
     </table></div>
   </section>
@@ -988,7 +986,6 @@ const ACTIVITY_POINTS = {
   ca_held:5,     // closing appt held
   nb_written:10, // new business submitted
   nb_closed:15,  // new business closed/placed — target 1/wk
-  a360:2         // flawless A360 profile
 };
 const WEEKLY_MIN = 35;          // ASSOCIATE points floor (placeholder; recalibrate after 3-4 weeks)
 const WEEKLY_MIN_PARTNER = 0;   // partners are scored on outcomes (FYC/premium), not an activity floor
@@ -1264,7 +1261,7 @@ TYPES.forEach(t=>{
 })();
 
 const $ = id => document.getElementById(id);
-const num = id => { const v = parseFloat($(id).value); return isNaN(v)?0:v; };
+const num = id => { const el = $(id); const v = el ? parseFloat(el.value) : NaN; return isNaN(v)?0:v; };
 const money = n => "$" + Math.round(n).toLocaleString("en-US");
 const pct = (a,b) => b>0 ? Math.round(100*a/b)+"%" : "—";
 function setRatio(valId, tgtId, val, target, fmt){
@@ -1330,7 +1327,6 @@ function buildPayload(){
     closing_appts_held: num("ca_held"),
     new_business_submitted: num("nb_written"),
     new_business_closed:    num("nb_closed"),
-    a360_profiles: num("a360"),
     revenue_submitted: num("rev_sub"),
     revenue_closed: num("rev_closed"),
     submitted_at: new Date().toISOString()
@@ -1408,7 +1404,6 @@ function summaryText(p){
     "Closing appts scheduled / held: "+p.closing_appts_scheduled+" / "+p.closing_appts_held,
     "New business submitted: "+p.new_business_submitted,
     "New business closed: "+p.new_business_closed,
-    "A360 profiles: "+p.a360_profiles,
     "Revenue submitted: "+money(p.revenue_submitted),
     "Revenue closed: "+money(p.revenue_closed)
   ].join("\n");
