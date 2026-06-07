@@ -84,11 +84,11 @@
   .mw-bar-fill{ height:100%; background:var(--navy); border-radius:5px; }
   .mw-goal.hit .mw-bar-fill{ background:var(--good); }
   .mw-g-note{ font-size:10.5px; color:var(--warn); margin-top:3px; font-style:italic; }
-  .mw-nums{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .mw-num{ background:var(--field); border:1px solid var(--line); border-radius:9px; padding:9px 11px; }
+  .mw-nums{ display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .mw-num{ background:var(--field); border:1px solid var(--line); border-radius:9px; padding:9px 11px; flex:1 0 110px; }
   .mw-num span{ font-size:10px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); font-weight:700; display:block; }
   .mw-num b{ font-family:'Fraunces',serif; font-size:18px; color:var(--navy); }
-  @media (max-width:760px){ .mw-nums{ grid-template-columns:1fr 1fr; } }
+  .report-cols > div, .rev-cell, .club-cell, .mw-num{ min-width:0; }
 
   /* Tables */
   table.grid{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -452,7 +452,7 @@ function renderCasesList(cases){
 function renderTeam(week){
   const all = caseStats(casesFor(week, null));
   const totals = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Team totals this week</span></div>'+
-    '<div class="mw-nums" style="grid-template-columns:repeat(4,1fr)">'+
+    '<div class="mw-nums">'+
       '<div class="mw-num"><span>Open opportunities</span><b>'+all.opp+'</b></div>'+
       '<div class="mw-num"><span>FYC submitted</span><b>'+money(all.fycSub)+'</b></div>'+
       '<div class="mw-num"><span>AUM submitted</span><b>'+money(all.aumSub)+'</b></div>'+
