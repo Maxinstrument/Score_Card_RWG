@@ -158,6 +158,26 @@
     .mast-text h1{ font-size:16px !important; margin:0 !important; color:var(--navy) !important; }
     .mast-slogan{ color:var(--gold) !important; font-size:10px; margin:2px 0 0 !important; }
   }
+  .tscroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  @media (max-width:600px){
+    .masthead{ padding:18px 16px; }
+    .mast-inner{ gap:14px; }
+    .mast-logo{ height:46px; }
+    .mast-text h1{ font-size:21px; }
+    .mast-slogan{ font-size:11px; }
+    .wrap{ padding:16px 13px 60px; }
+    .controls{ gap:10px; }
+    .ctrl{ flex:1 1 100%; }
+    .ctrl select, .ctrl .btn{ width:100%; min-width:0; }
+    .card{ padding:15px 14px; }
+    h2{ font-size:19px; }
+    .person-title{ font-size:20px; }
+    .club-grid{ grid-template-columns:1fr 1fr; }
+    .club-v{ font-size:18px; }
+    .club-bar-row b{ font-size:16px; }
+    table.grid th, table.grid td, table.lead th, table.lead td{ white-space:nowrap; }
+  }
+  @media print{ .tscroll{ overflow:visible !important; } }
 </style>
 </head>
 <body>
@@ -414,9 +434,9 @@ function renderMix(st){
     return '<tr><td>'+p+'</td><td>'+(m.op||'')+'</td><td>'+(m.subN||'')+'</td><td>'+(m.sub?money(m.sub):'')+'</td><td>'+(m.clN||'')+'</td><td>'+(m.cl?money(m.cl):'')+'</td></tr>';
   }).join("");
   return '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Product mix</span></div>'+
-    '<table class="grid"><thead><tr><th>Product</th><th># Opened</th><th># Subm.</th><th>$ Submitted</th><th># Closed</th><th>$ Closed</th></tr></thead>'+
+    '<div class="tscroll"><table class="grid"><thead><tr><th>Product</th><th># Opened</th><th># Subm.</th><th>$ Submitted</th><th># Closed</th><th>$ Closed</th></tr></thead>'+
     '<tbody>'+rows+'</tbody>'+
-    '<tfoot><tr><td>Total</td><td>'+tOp+'</td><td>'+tSubN+'</td><td>'+money(tSub)+'</td><td>'+tClN+'</td><td>'+money(tCl)+'</td></tr></tfoot></table></section>';
+    '<tfoot><tr><td>Total</td><td>'+tOp+'</td><td>'+tSubN+'</td><td>'+money(tSub)+'</td><td>'+tClN+'</td><td>'+money(tCl)+'</td></tr></tfoot></table></div></section>';
 }
 
 function renderCasesList(cases){
@@ -425,7 +445,7 @@ function renderCasesList(cases){
     return '<tr><td>'+esc(c.client_name)+'</td><td>'+esc(c.source)+'</td><td>'+esc(c.product)+'</td><td>'+esc(c.state)+'</td><td>'+money(num(c.amount))+'</td><td>'+(num(c.aum)?money(num(c.aum)):'')+'</td><td>'+esc(c.submitting_agent)+'</td></tr>';
   }).join("");
   return '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Cases this week</span></div>'+
-    '<table class="grid"><thead><tr><th>Client</th><th>Source</th><th>Product</th><th>State</th><th>$ Amount</th><th>AUM</th><th>Agent</th></tr></thead><tbody>'+rows+'</tbody></table></section>';
+    '<div class="tscroll"><table class="grid"><thead><tr><th>Client</th><th>Source</th><th>Product</th><th>State</th><th>$ Amount</th><th>AUM</th><th>Agent</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
 }
 
 /* ── Team report ─────────────────────────────────────────── */
@@ -460,7 +480,7 @@ function renderTeam(week){
       '<td>'+money(st.premClosed)+'</td><td>'+money(st.fycClosed)+'</td><td>'+money(st.aumTotal)+'</td></tr>';
   }).join("");
   const leadCard = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>By person this week</span></div>'+
-    '<table class="lead"><thead><tr><th>Agent</th><th>Goals</th><th>Opps</th><th>Subm.</th><th>Closed</th><th>Premium</th><th>FYC closed</th><th>AUM</th></tr></thead><tbody>'+lead+'</tbody></table></section>';
+    '<div class="tscroll"><table class="lead"><thead><tr><th>Agent</th><th>Goals</th><th>Opps</th><th>Subm.</th><th>Closed</th><th>Premium</th><th>FYC closed</th><th>AUM</th></tr></thead><tbody>'+lead+'</tbody></table></div></section>';
   return totals + leadCard + renderMix(all) + renderCasesList(casesFor(week, null));
 }
 
