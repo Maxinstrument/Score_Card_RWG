@@ -260,7 +260,8 @@
   .daily-grid{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
   .daily-grid th,.daily-grid td{border:1px solid var(--line-strong);padding:9px 8px;text-align:center;}
   .daily-grid th{background:var(--navy);color:#fff;font-weight:600;font-size:12px;}
-  .daily-grid td:first-child,.daily-grid th:first-child{text-align:left;background:var(--field);font-weight:600;}
+  .daily-grid td:first-child{text-align:left;background:var(--field);font-weight:600;}
+  .daily-grid th:first-child{text-align:left;}
   .daily-grid tfoot td{font-weight:700;background:#FBF8F0;}
 
   /* ── Daily tally table: horizontal scroll on small screens ── */
@@ -548,7 +549,7 @@
     color:#FF6B6B;font-size:13px;
     margin-top:12px;min-height:18px;
   }
-  /* ── Partner scoreboard (Chairman''s Club) ───────── */
+  /* ── Partner scoreboard (Chairman's Club) ───────── */
   .sb-card{background:linear-gradient(160deg,#0E2440,#0A1A30);color:#fff;border:1px solid rgba(194,161,77,.4);}
   .sb-card .eyebrow span{color:var(--gold-soft);}
   .sb-weekno{margin-left:auto;color:rgba(255,255,255,.55);font-size:11px;letter-spacing:.5px;}
@@ -592,6 +593,42 @@
   #pgate-ok{background:var(--gold);color:var(--navy-deep);}
   #pgate-cancel{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2) !important;}
   #pgate-err{color:#FF6B6B;font-size:12px;margin-top:10px;min-height:16px;}
+  /* ── Team Cases widget (Phase 2) ─────────────────── */
+  .tc-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .tc-status{font-size:12.5px;color:var(--muted);}
+  .tc-list{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+  .tc-row{
+    display:grid;grid-template-columns:1.4fr 1fr .9fr .9fr 1fr auto;
+    gap:10px;align-items:center;
+    padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--field);
+    font-size:13px;
+  }
+  .tc-row .tc-c-name{font-weight:600;}
+  .tc-row .tc-pill{
+    font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:2px 8px;border-radius:5px;text-align:center;
+  }
+  .tc-pill.Opened{background:rgba(14,36,64,.08);color:var(--navy);}
+  .tc-pill.Submitted{background:rgba(194,161,77,.16);color:var(--warn);}
+  .tc-pill.Closed{background:rgba(46,125,91,.14);color:var(--good);}
+  .tc-row .tc-money{font-variant-numeric:tabular-nums;text-align:right;}
+  .tc-row .tc-agent{font-size:11.5px;color:var(--muted);}
+  @media (max-width:640px){
+    .tc-row{grid-template-columns:1fr 1fr;}
+  }
+  .tc-add{border-top:1px solid var(--line);padding-top:16px;}
+  .tc-add-h{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:var(--navy);margin:0 0 12px;}
+  .tc-add-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr .9fr .9fr .9fr auto;gap:8px;align-items:center;}
+  .tc-add-grid input,.tc-add-grid select{padding:9px 10px;font-size:13px;}
+  .tc-mc{position:relative;}
+  .tc-mc::before{content:"$";position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none;}
+  .tc-mc input{padding-left:16px !important;width:100%;}
+  #tcAddBtn{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+  #tcAddBtn:hover{filter:brightness(1.12);}
+  @media (max-width:640px){
+    .tc-add-grid{grid-template-columns:1fr 1fr;}
+    .tc-add-grid input,.tc-add-grid select,#tcAddBtn{font-size:16px;min-height:44px;}
+  }
 </style>
 </head>
 <body>
@@ -639,7 +676,7 @@
 <!-- Partner scoreboard (gated: partner role + second passphrase) -->
 <div class="wrap partner-only" id="partner-scoreboard">
   <section class="card sb-card">
-    <div class="eyebrow"><span class="dot"></span><span>Partner Scoreboard · Chairman''s Club 2026</span><span class="sb-weekno" id="sb_weekno">Week — of 25</span></div>
+    <div class="eyebrow"><span class="dot"></span><span>Partner Scoreboard · Chairman's Club 2026</span><span class="sb-weekno" id="sb_weekno">Week — of 25</span></div>
     <div class="sb-grid">
       <div class="sb-cell"><div class="sb-k">FYC this week</div><div class="sb-v" id="sb_fyc_week">$0</div></div>
       <div class="sb-cell"><div class="sb-k">FYC year-to-date</div><div class="sb-v sb-edit"><input type="number" id="sb_ytd_input" placeholder="160000"></div></div>
@@ -657,7 +694,7 @@
       <div class="sb-cell"><div class="sb-k">Avg FYC / closed case</div><div class="sb-v" id="sb_avg_fyc">$0</div></div>
       <div class="sb-cell"><div class="sb-k">AUM brought in</div><div class="sb-v" id="sb_aum">$0</div></div>
     </div>
-    <p class="sb-note">FYC = annualized premium × 50%. YTD is editable for the current booked figure. Pace assumes $6,000/week of monthly premium across the 25-week sprint.</p>
+    <p class="sb-note">FYC = revenue on Whole Life, Term, and Disability (closed cases). Premium is derived at 50% of revenue for WL, DI, LTC. YTD is editable; pace assumes $6,000/week of premium across the 25-week sprint.</p>
   </section>
 </div>
 
@@ -834,6 +871,36 @@
     <div id="clogBody"></div>
     <button type="button" class="clog-add" id="clogAdd">+ Add row</button>
   </section>
+
+  <!-- Phase 2: Shared Team Cases (live) -->
+  <section class="card" id="teamCasesCard">
+    <div class="eyebrow"><span class="dot"></span><span>Shared · live</span></div>
+    <h2>Team Cases This Week</h2>
+    <p class="hint">Every case logged by the whole team for the selected week. Check here before adding a new one so we don't double-count.</p>
+    <div class="tc-bar">
+      <button type="button" class="clog-add" id="tcLoadBtn">&#8635; Load / refresh</button>
+      <span id="tcStatus" class="tc-status"></span>
+    </div>
+    <div id="tcList" class="tc-list"></div>
+
+    <div class="tc-add">
+      <h3 class="tc-add-h">Add a case to the shared store</h3>
+      <div class="tc-add-grid">
+        <input type="text" id="tcClient" placeholder="Client name" autocomplete="off">
+        <select id="tcSource"></select>
+        <select id="tcProduct"></select>
+        <select id="tcState">
+          <option value="Opened">Opened</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Closed">Closed</option>
+        </select>
+        <div class="tc-mc"><input type="number" id="tcAmount" min="0" step="0.01" inputmode="decimal" placeholder="Amount"></div>
+        <div class="tc-mc"><input type="number" id="tcAum" min="0" step="1" inputmode="decimal" placeholder="AUM"></div>
+        <button type="button" id="tcAddBtn">Add case</button>
+      </div>
+      <div id="tcAddStatus" class="tc-status"></div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -895,14 +962,15 @@ const ROLE_MAP = {
    (e.g. Seminar is "dark" until conversion data exists). Powers the
    "Potential premium sourced" auto-calc on the associate view. */
 const SOURCES = [
-  { id:"seminar",  label:"Seminar",                    premium:0    },
-  { id:"frs",      label:"FRS Investment Plan",        premium:1000 },
-  { id:"pmax_std", label:"Pension Max (standard)",     premium:1000 },
-  { id:"pmax_pf",  label:"Pension Max (Police/Fire)",  premium:2000 },
-  { id:"haven",    label:"Haven Life",                 premium:500  },
-  { id:"natural",  label:"Natural Market (affluent)",  premium:2000 },
-  { id:"coi",      label:"COI/Referral",               premium:0    },
-  { id:"other",    label:"Other",                      premium:0    }
+  { id:"pension_reg", label:"Pension Member (Regular)",  premium:1000 },
+  { id:"invest_plan", label:"Investment Plan",           premium:1000 },
+  { id:"pmax",        label:"Pension Max",               premium:1000 },
+  { id:"high_risk",   label:"High Risk Member",          premium:2000 },
+  { id:"haven",       label:"Haven Life",                premium:500  },
+  { id:"natural",     label:"Natural Market (affluent)", premium:2000 },
+  { id:"coi",         label:"COI/Referral",              premium:0    },
+  { id:"current",     label:"Current Client",            premium:0    },
+  { id:"other",       label:"Other",                     premium:0    }
 ];
 const SOURCE_PREMIUM = {};
 SOURCES.forEach(s => { SOURCE_PREMIUM[s.id] = s.premium; });
@@ -915,6 +983,17 @@ const PARTNER_PASSPHRASE = "chairman2026";
 /* Provisional ratio targets (placeholders — recalibrate after 2-3 weeks).
    Edit here in one place. */
 const RATIO_TARGETS = { oppPerHeld: 0.5, setRate: 0.5, closeRate: 0.5 };
+
+/* Partner FYC / premium model
+   - Revenue ($ Amount) on Whole Life, Term, and Disability counts as FYC.
+   - Premium is derived behind the scenes at 50% of revenue for WL, DI, LTC.
+   - "Agent Involved" credits the associate who helped on the case. */
+const FYC_PRODUCTS         = ["wl","term","di"];   // revenue here = FYC
+const PREMIUM_PRODUCTS     = ["wl","di","ltc","term"]; // premium = 50% of revenue
+const PREMIUM_FROM_REVENUE = 0.5;
+const CLOSED_WITH = ["None","Jesus Zamora","Nelson Mompierre Jr.","Maryurie Estrada","Other"];
+function rowFyc(prodId, amt){ return FYC_PRODUCTS.indexOf(prodId)>=0 ? amt : 0; }
+function rowPremium(prodId, amt){ return PREMIUM_PRODUCTS.indexOf(prodId)>=0 ? amt*PREMIUM_FROM_REVENUE : 0; }
 
 function fyc(monthlyPremium){ return monthlyPremium * 12 * CONFIG.COMMISSION_RATE; }
 function roleOf(name){ return ROLE_MAP[name] || "associate"; }
@@ -1250,15 +1329,18 @@ function buildPayload(){
     const opened    = row.querySelector('.clog-opened').checked;
     const submitted = row.querySelector('.clog-submitted').checked;
     const closed    = row.querySelector('.clog-closed').checked;
-    const prem   = parseFloat(row.querySelector('.clog-prem').value) || 0;
     const aum    = parseFloat(row.querySelector('.clog-aum').value)  || 0;
     const amt    = parseFloat(row.querySelector('.clog-amt').value)  || 0;
-    if(!name && !srcId && !prodId && !amt && !prem && !aum && !opened && !submitted && !closed) return; // skip empty rows
+    const closedWith = (row.querySelector('.clog-closedwith')||{}).value || '';
+    if(!name && !srcId && !prodId && !amt && !aum && !opened && !submitted && !closed) return; // skip empty rows
     const prod = (TYPES.find(t=>t.id===prodId)||{}).name || "";
     const src  = (SOURCES.find(s=>s.id===srcId)||{}).label || "";
+    const rprem = rowPremium(prodId, amt);   // derived premium (50% of revenue for WL/DI/LTC)
+    const rfyc  = rowFyc(prodId, amt);       // FYC-eligible revenue (WL/Term/DI)
     p.client_log.push({client:name, source:src, product:prod,
                        opened:opened, submitted:submitted, closed:closed,
-                       monthly_premium:prem, aum:aum, amount:amt,
+                       agent_involved:closedWith, aum:aum, amount:amt,
+                       derived_premium:rprem, fyc_eligible:rfyc,
                        submitted_amount: submitted?amt:0, closed_amount: closed?amt:0});
   });
 
@@ -1347,6 +1429,7 @@ try{ (function(){
   const SRC_OPTS = SOURCES.map(s =>
     '<option value="'+s.id+'">'+s.label+'</option>'
   ).join('');
+  const CW_OPTS = CLOSED_WITH.map(function(w){     return '<option value="'+w+'">'+w+'</option>';   }).join('');
 
   const body = document.getElementById('clogBody');
   let rowCount = 0;
@@ -1363,11 +1446,11 @@ try{ (function(){
       '<div class="clog-field chk"><label>Opened</label><div class="clog-chk-box"><input type="checkbox" class="clog-opened"></div></div>'+
       '<div class="clog-field chk"><label>Submitted</label><div class="clog-chk-box"><input type="checkbox" class="clog-submitted"></div></div>'+
       '<div class="clog-field chk"><label>Closed</label><div class="clog-chk-box"><input type="checkbox" class="clog-closed"></div></div>'+
-      '<div class="clog-field num clog-partner"><label>Monthly prem.</label><div class="clog-mc"><input type="number" class="clog-prem" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>'+
       '<div class="clog-field num clog-partner"><label>AUM</label><div class="clog-mc"><input type="number" class="clog-aum" min="0" step="1" inputmode="decimal" placeholder="0"></div></div>'+
-      '<div class="clog-field num"><label>$ Amount</label><div class="clog-mc"><input type="number" class="clog-amt" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>';
+      '<div class="clog-field num"><label>$ Amount</label><div class="clog-mc"><input type="number" class="clog-amt" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>'+
+      '<div class="clog-field source clog-partner"><label>Agent Involved</label><select class="clog-closedwith">'+CW_OPTS+'</select></div>';
 
-    row.querySelectorAll('.clog-name, .clog-src, .clog-prod, .clog-prem, .clog-aum, .clog-amt')
+    row.querySelectorAll('.clog-name, .clog-src, .clog-prod, .clog-aum, .clog-amt, .clog-closedwith')
        .forEach(el => el.addEventListener('input', recalcClientLog));
     const opChk = row.querySelector('.clog-opened');
     const suChk = row.querySelector('.clog-submitted');
@@ -1385,7 +1468,7 @@ try{ (function(){
     TYPES.forEach(t => { totals[t.id] = {count:0, submittedCount:0, sub:0, closedCount:0, clo:0}; });
 
     let potentialPremium=0, premiumWritten=0, premiumPipeline=0, aumTotal=0,
-        bigCaseCount=0, closedFycSum=0, closedFycN=0;
+        bigCaseCount=0, closedFycSum=0, closedFycN=0, fycClosed=0;
 
     body.querySelectorAll('.clog-row').forEach(row => {
       const prod      = row.querySelector('.clog-prod').value;
@@ -1393,19 +1476,20 @@ try{ (function(){
       const opened    = row.querySelector('.clog-opened').checked;
       const submitted = row.querySelector('.clog-submitted').checked;
       const closed    = row.querySelector('.clog-closed').checked;
-      const prem      = parseFloat(row.querySelector('.clog-prem').value) || 0;
       const aum       = parseFloat(row.querySelector('.clog-aum').value)  || 0;
       const amt       = parseFloat(row.querySelector('.clog-amt').value)  || 0;
 
       // Source-driven potential premium (associate hero number)
       if(src && SOURCE_PREMIUM[src]) potentialPremium += SOURCE_PREMIUM[src];
 
-      // Partner premium / FYC / AUM / big-case
+      // Partner FYC / premium / AUM / big-case (derived from product + amount)
+      const rfyc  = rowFyc(prod, amt);
+      const rprem = rowPremium(prod, amt);
       aumTotal += aum;
-      if(fyc(prem) >= CONFIG.BIG_CASE_FYC) bigCaseCount++;
-      if(submitted){ premiumWritten += prem; }
-      if(opened || submitted){ premiumPipeline += prem; }
-      if(closed){ closedFycSum += fyc(prem); closedFycN++; }
+      if(rfyc >= CONFIG.BIG_CASE_FYC) bigCaseCount++;
+      if(submitted){ premiumWritten += rprem; }
+      if(opened || submitted){ premiumPipeline += rfyc; }
+      if(closed){ fycClosed += rfyc; closedFycSum += rfyc; closedFycN++; }
 
       // Product mix. One state per row: Opened, Submitted, or Closed.
       if(!prod) return;
@@ -1443,8 +1527,8 @@ try{ (function(){
     GOALS.premiumWritten   = premiumWritten;
     GOALS.premiumPipeline  = premiumPipeline;
     GOALS.aum              = aumTotal;
-    GOALS.fycWeek          = fyc(premiumWritten);
-    GOALS.pipelineFyc      = fyc(premiumPipeline);
+    GOALS.fycWeek          = fycClosed;
+    GOALS.pipelineFyc      = premiumPipeline;
     GOALS.bigCaseCount     = bigCaseCount;
     GOALS.avgFycClosed     = closedFycN > 0 ? closedFycSum/closedFycN : 0;
 
@@ -1479,7 +1563,7 @@ $("btnPrint").addEventListener("click", () => {
     const row = inp.closest('.frow'); if(!row) return;
     const fl = row.querySelector('.flabel'); if(!fl) return;
     fl.innerHTML = (role==='associate')
-      ? 'Closing appointments SET for a partner<small>The hero number — handoffs that stick</small>'
+      ? 'Closing Appointments SET<small>The closing meeting put on the calendar</small>'
       : 'Closing appointments scheduled<small>A presentation or ask meeting on the calendar</small>';
   }
   function applyAssociate(){
@@ -1520,6 +1604,98 @@ $("btnPrint").addEventListener("click", () => {
 /* ── Passphrase gate ──────────────────────────────────────────
    Change the value below to your team passphrase.
    ------------------------------------------------------------ */
+/* ── Phase 2: Shared Team Cases (live) ─────────────────────── */
+const CASES_ENDPOINT = "https://script.google.com/macros/s/AKfycbyBkStY31dgbEIkVCMFcgfFtM_LbVAtOCrDnzw9tDYIeK7H8cL5xdsTJkBlxZGnaQTN/exec";
+
+function jsonpGetCases(week, cb){
+  const name = "rwg_cb_" + Math.random().toString(36).slice(2);
+  const script = document.createElement("script");
+  let done = false;
+  function cleanup(){ try{ delete window[name]; }catch(e){ window[name]=undefined; } if(script.parentNode) script.parentNode.removeChild(script); }
+  window[name] = function(data){ done=true; cleanup(); cb(data); };
+  script.onerror = function(){ if(!done){ cleanup(); cb({ok:false,error:"network"}); } };
+  script.src = CASES_ENDPOINT + "?action=getCases&week=" + encodeURIComponent(week) + "&callback=" + name + "&_=" + Date.now();
+  document.body.appendChild(script);
+  setTimeout(function(){ if(!done){ cleanup(); cb({ok:false,error:"timeout"}); } }, 12000);
+}
+
+function postCase(payload, done){
+  fetch(CASES_ENDPOINT, {
+    method:"POST", mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(payload)
+  }).then(function(){ done(true); }).catch(function(){ done(false); });
+}
+
+(function(){
+  const srcSel  = document.getElementById("tcSource");
+  const prodSel = document.getElementById("tcProduct");
+  if(srcSel)  srcSel.innerHTML  = '<option value="">- source -</option>'  + SOURCES.map(function(s){return '<option value="'+s.id+'">'+s.label+'</option>';}).join("");
+  if(prodSel) prodSel.innerHTML = '<option value="">- product -</option>' + TYPES.map(function(t){return '<option value="'+t.id+'">'+t.name+'</option>';}).join("");
+
+  const statusEl = document.getElementById("tcStatus");
+  const listEl   = document.getElementById("tcList");
+  function money(n){ return "$"+Math.round(n||0).toLocaleString("en-US"); }
+
+  function render(cases){
+    if(!cases.length){ listEl.innerHTML=""; statusEl.textContent="No cases logged yet for this week."; return; }
+    statusEl.textContent = cases.length + " case" + (cases.length>1?"s":"") + " this week";
+    listEl.innerHTML = cases.map(function(c){
+      const st = c.state || "";
+      return '<div class="tc-row">'+
+        '<span class="tc-c-name">'+(c.client_name||"(no name)")+'</span>'+
+        '<span>'+(c.product||"")+'</span>'+
+        '<span class="tc-pill '+st+'">'+st+'</span>'+
+        '<span class="tc-agent">'+(c.source||"")+'</span>'+
+        '<span class="tc-money">'+money(c.amount)+'</span>'+
+        '<span class="tc-agent">'+(c.submitting_agent||"")+'</span>'+
+      '</div>';
+    }).join("");
+  }
+
+  function load(){
+    const week = document.getElementById("week").value;
+    if(!week){ statusEl.textContent="Pick a week first."; return; }
+    statusEl.textContent="Loading...";
+    jsonpGetCases(week, function(resp){
+      if(!resp || !resp.ok){ statusEl.textContent="Could not load (check the connection)."; return; }
+      render(resp.cases || []);
+    });
+  }
+  document.getElementById("tcLoadBtn").addEventListener("click", load);
+
+  document.getElementById("tcAddBtn").addEventListener("click", function(){
+    const week  = document.getElementById("week").value;
+    const agent = document.getElementById("agent").value;
+    const addStatus = document.getElementById("tcAddStatus");
+    if(!week){  addStatus.textContent="Pick a week first."; return; }
+    if(!agent){ addStatus.textContent="Select your name first."; return; }
+    const client = document.getElementById("tcClient").value.trim();
+    if(!client){ addStatus.textContent="Enter a client name."; return; }
+    const newId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ("id-"+Date.now()+"-"+Math.random().toString(36).slice(2));
+    const payload = {
+      action:"createCase", record_id:newId,
+      week_ending:week, submitting_agent:agent, client_name:client,
+      source:(SOURCES.find(function(s){return s.id===srcSel.value;})||{}).label || "",
+      product:(TYPES.find(function(t){return t.id===prodSel.value;})||{}).name || "",
+      state:document.getElementById("tcState").value,
+      amount:parseFloat(document.getElementById("tcAmount").value)||0,
+      aum:parseFloat(document.getElementById("tcAum").value)||0,
+      agent_involved:"None"
+    };
+    addStatus.textContent="Saving...";
+    postCase(payload, function(ok){
+      if(ok){
+        addStatus.textContent="Saved.";
+        document.getElementById("tcClient").value="";
+        document.getElementById("tcAmount").value="";
+        document.getElementById("tcAum").value="";
+        setTimeout(load, 900);
+      } else { addStatus.textContent="Save failed (check connection)."; }
+    });
+  });
+})();
+
 const PASSPHRASE = "togetherwearemore";
 (function(){
   const gate = document.getElementById("gate");
