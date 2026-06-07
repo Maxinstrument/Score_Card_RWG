@@ -644,6 +644,8 @@
   .tc-actions{display:flex;gap:6px;justify-content:flex-end;}
   .tc-actions button{font-size:11px;font-weight:700;border-radius:6px;padding:5px 9px;cursor:pointer;font-family:inherit;border:1px solid var(--line-strong);background:#fff;color:var(--navy);}
   .tc-actions .tc-edit:hover{background:var(--field);}
+  .tc-sort{ cursor:pointer; user-select:none; }
+  .tc-sort:hover{ color:var(--navy); }
   .tc-actions .tc-del{color:var(--warn);border-color:rgba(176,105,31,.4);}
   .tc-actions .tc-del:hover{background:rgba(176,105,31,.08);}
   #tcAddBtn:hover{filter:brightness(1.12);}
@@ -1736,6 +1738,18 @@ function postCase(payload, done){
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]; }); }
   function money(n){ return "$"+Math.round(n||0).toLocaleString("en-US"); }
 
+  let sortKey = null, sortDir = 1;
+  const TC_NUMERIC = { amount:1, aum:1 };
+  const TC_COLS = [
+    {label:"Client", key:"client_name"},
+    {label:"Product", key:"product"},
+    {label:"State", key:"state"},
+    {label:"Source", key:"source"},
+    {label:"$ Amount", key:"amount", cls:"tc-money"},
+    {label:"AUM", key:"aum", cls:"tc-money"},
+    {label:"Agent", key:"submitting_agent"},
+    {label:"", key:""}
+  ];
   function render(cases){
     currentCases = cases || [];
     window.currentTeamCases = currentCases;
@@ -1743,8 +1757,23 @@ function postCase(payload, done){
     if(!currentCases.length){ listEl.innerHTML=""; statusEl.textContent="No cases logged yet for this week."; return; }
     statusEl.textContent = currentCases.length + " case" + (currentCases.length>1?"s":"") + " this week";
     const isPartner = document.body.classList.contains("role-partner");
-    const head = '<div class="tc-head"><span>Client</span><span>Product</span><span>State</span><span>Source</span><span class="tc-money">$ Amount</span><span class="tc-money">AUM</span><span>Agent</span><span></span></div>';
-    listEl.innerHTML = head + currentCases.map(function(c){
+    const head = '<div class="tc-head">' + TC_COLS.map(function(col){
+      if(!col.key) return '<span></span>';
+      const arrow = (sortKey===col.key) ? (sortDir>0?' ▲':' ▼') : '';
+      return '<span class="tc-sort'+(col.cls?(' '+col.cls):'')+'" data-sort="'+col.key+'">'+col.label+arrow+'</span>';
+    }).join('') + '</div>';
+
+    let view = currentCases.slice();
+    if(sortKey){
+      const isNum = TC_NUMERIC[sortKey];
+      view.sort(function(a,b){
+        if(isNum) return ((Number(a[sortKey])||0) - (Number(b[sortKey])||0)) * sortDir;
+        const va=String(a[sortKey]||"").toLowerCase(), vb=String(b[sortKey]||"").toLowerCase();
+        return va<vb ? -sortDir : (va>vb ? sortDir : 0);
+      });
+    }
+
+    listEl.innerHTML = head + view.map(function(c){
       const st = c.state || "";
       return '<div class="tc-row">'+
         '<span class="tc-c-name">'+esc(c.client_name||"(no name)")+'</span>'+
@@ -1777,8 +1806,10 @@ function postCase(payload, done){
   listEl.addEventListener("click", function(e){
     const ed = e.target.closest(".tc-edit");
     const dl = e.target.closest(".tc-del");
+    const so = e.target.closest(".tc-sort");
     if(ed) startEdit(ed.getAttribute("data-id"));
     else if(dl) doDelete(dl.getAttribute("data-id"));
+    else if(so){ const k=so.getAttribute("data-sort"); if(sortKey===k) sortDir=-sortDir; else { sortKey=k; sortDir=1; } render(currentCases); }
   });
 
   function startEdit(id){
