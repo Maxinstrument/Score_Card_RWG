@@ -1646,7 +1646,7 @@ $("btnPrint").addEventListener("click", () => {
   document.getElementById('pgate-ok').addEventListener('click', tryUnlock);
   document.getElementById('pgate-cancel').addEventListener('click', cancelUnlock);
   pIn.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
-  document.getElementById('sb_ytd_input').addEventListener('input', recalcGoals);
+  var _ytd = document.getElementById('sb_ytd_input'); if(_ytd) _ytd.addEventListener('input', recalcGoals);
   document.body.classList.add('role-associate'); // safe default
 })();
 /* ── Passphrase gate ──────────────────────────────────────────
