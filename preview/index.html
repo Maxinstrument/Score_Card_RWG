@@ -255,14 +255,17 @@
   .gold-divider::after{background:linear-gradient(to left,transparent,var(--gold-soft));}
   .gold-divider span{color:var(--gold);font-size:11px;white-space:nowrap;opacity:.7;}
 
-  /* Daily tally card */
+  /* Daily tally card — print-only (hidden on screen, shown when printing) */
+  #daily{display:none;}
   .daily{margin-top:8px;}
-  .daily-grid{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
-  .daily-grid th,.daily-grid td{border:1px solid var(--line-strong);padding:9px 8px;text-align:center;}
-  .daily-grid th{background:var(--navy);color:#fff;font-weight:600;font-size:12px;}
+  .daily-grid,.cw-grid{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+  .daily-grid th,.daily-grid td,.cw-grid th,.cw-grid td{border:1px solid var(--line-strong);padding:9px 8px;text-align:center;}
+  .daily-grid th,.cw-grid th{background:var(--navy);color:#fff;font-weight:600;font-size:12px;}
   .daily-grid td:first-child{text-align:left;background:var(--field);font-weight:600;}
   .daily-grid th:first-child{text-align:left;}
   .daily-grid tfoot td{font-weight:700;background:#FBF8F0;}
+  .cw-grid td:nth-child(2){text-align:left;}
+  .cw-grid tbody td{height:30px;}
 
   /* ── Daily tally table: horizontal scroll on small screens ── */
   .daily-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -430,7 +433,10 @@
 
     /* Tally-card-only print — triggered by body.print-tally */
     body.print-tally > *:not(#daily):not(#tally-print-header){ display:none !important; }
+    body.print-tally #daily{ display:block !important; }
     body.print-tally #tally-print-header{ display:flex !important; }
+    body.print-tally .cw-grid{ font-size:9px; margin-top:4px; }
+    body.print-tally .cw-grid tbody td{ height:22px; }
 
     /* ── Single-page fit ─────────────────────── */
     @page { size: letter portrait; margin: 0.35in; }
@@ -837,7 +843,7 @@
         </div>
 
         <button class="btn primary" id="btnSubmit">Submit week</button>
-        <button class="btn ghost no-print" id="btnPrint">Print daily tally card</button>
+        <button class="btn ghost no-print" id="btnPrint">Print weekly worksheet</button>
         <div class="status" id="status"></div>
       </section>
     </aside>
@@ -880,6 +886,37 @@
   </section>
 
 
+  <!-- Weekly Cases Worksheet (print-only, hand-fill) -->
+  <section class="card" id="casesWorksheet">
+    <div class="eyebrow"><span class="dot"></span><span>Carry this</span></div>
+    <h2>Weekly Cases Worksheet</h2>
+    <p class="hint">Write down each case as you work it this week. On Friday, enter them into Team Cases. Circle the stage: O = Opened, S = Submitted, C = Closed.</p>
+    <div class="daily-scroll"><table class="cw-grid">
+      <thead>
+        <tr><th>#</th><th>Client name</th><th>Source</th><th>Product</th><th>Stage</th><th>$ Amount</th><th>AUM</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>2</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>3</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>4</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>5</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>6</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>7</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>8</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>9</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>10</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>11</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>12</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>13</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>14</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+        <tr><td>15</td><td></td><td></td><td></td><td>O / S / C</td><td></td><td></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</div>
+
+<div class="wrap">
   <!-- Phase 2: Shared Team Cases (live) -->
   <section class="card" id="teamCasesCard">
     <div class="eyebrow"><span class="dot"></span><span>Shared · live</span></div>
