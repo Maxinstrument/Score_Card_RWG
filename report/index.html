@@ -319,23 +319,34 @@ function buildControls(){
 }
 
 /* ── Case stats for a set of cases ───────────────────────── */
-function caseStats(cases){
+function caseStats(cases, week){
   const mix = {}; PRODUCTS.forEach(p => mix[p]={op:0,subN:0,sub:0,clN:0,cl:0});
   let opp=0,nbSub=0,nbClosed=0,revSub=0,revClosed=0,fycSub=0,aumSub=0,premClosed=0,potential=0,fycClosed=0,aumTotal=0;
   cases.forEach(function(c){
-    const amt=num(c.amount), aum=num(c.aum), st=c.state, prod=c.product, src=c.source;
-    aumTotal += aum;
-    if(st==="Opened"){ opp++; if(SOURCE_PREMIUM[src]) potential += SOURCE_PREMIUM[src]; if(mix[prod]) mix[prod].op++; }
-    if(st==="Submitted"){ nbSub++; revSub+=amt; fycSub+=rowFyc(prod,amt); aumSub+=aum; if(mix[prod]){mix[prod].subN++; mix[prod].sub+=amt;} }
-    if(st==="Closed"){ nbClosed++; revClosed+=amt; fycClosed+=rowFyc(prod,amt); premClosed += amt*PREMIUM_PER_AMOUNT + aum*PREMIUM_PER_AUM; if(mix[prod]){mix[prod].clN++; mix[prod].cl+=amt;} }
+    const amt=num(c.amount), aum=num(c.aum), prod=c.product, src=c.source;
+    // Attribute each milestone to the week it actually happened. With no week
+    // filter, fall back to the case's current state (whole-dataset contexts).
+    const ow = c.opened_week || ymd(c.week_ending);
+    const sw = c.submitted_week || "";
+    const cw = c.closed_week || "";
+    const openedHere = week ? (ow===week) : (c.state==="Opened");
+    const subHere    = week ? (sw===week) : (c.state==="Submitted");
+    const closedHere = week ? (cw===week) : (c.state==="Closed");
+    if(openedHere){ opp++; if(SOURCE_PREMIUM[src]) potential += SOURCE_PREMIUM[src]; if(mix[prod]) mix[prod].op++; }
+    if(subHere){ nbSub++; revSub+=amt; fycSub+=rowFyc(prod,amt); aumSub+=aum; if(mix[prod]){mix[prod].subN++; mix[prod].sub+=amt;} }
+    if(closedHere){ nbClosed++; revClosed+=amt; fycClosed+=rowFyc(prod,amt); premClosed += amt*PREMIUM_PER_AMOUNT + aum*PREMIUM_PER_AUM; aumTotal += aum; if(mix[prod]){mix[prod].clN++; mix[prod].cl+=amt;} }
   });
   return {mix,opp,nbSub,nbClosed,revSub,revClosed,fycSub,aumSub,premClosed,potential,fycClosed,aumTotal};
 }
 
 function casesFor(week, person){
   return DATA.cases.filter(function(c){
-    if(week && ymd(c.week_ending)!==week) return false;
     if(person && c.submitting_agent!==person) return false;
+    if(week){
+      // A case belongs to a week if it was opened, submitted, or closed in it.
+      const ow = c.opened_week || ymd(c.week_ending);
+      if(ow!==week && (c.submitted_week||"")!==week && (c.closed_week||"")!==week) return false;
+    }
     return true;
   });
 }
@@ -364,8 +375,8 @@ function renderClub(week){
   let weekFyc=0, weekPrem=0;
   casesFor(week, null).forEach(function(c){
     const sh = firmShare(c.submitting_agent);
-    if(c.state==="Closed")    weekFyc  += rowFyc(c.product, num(c.amount)) * sh;
-    if(c.state==="Submitted") weekPrem += (num(c.amount)*PREMIUM_PER_AMOUNT) * sh;
+    if((c.closed_week||"")===week)    weekFyc  += rowFyc(c.product, num(c.amount)) * sh;
+    if((c.submitted_week||"")===week) weekPrem += (num(c.amount)*PREMIUM_PER_AMOUNT) * sh;
   });
   const pct = Math.min(100, Math.round(100*ytd/SPRINT.goalTotal));
   const premPct = Math.min(100, Math.round(100*weekPrem/WEEKLY_PREMIUM_TARGET));
@@ -387,7 +398,7 @@ function renderClub(week){
 
 /* ── My Week goals + four numbers for a person ───────────── */
 function renderSnapshot(person, week, mode){
-  const st = caseStats(casesFor(week, person));
+  const st = caseStats(casesFor(week, person), week);
   const wk = weeklyFor(week, person);
   const g = AGENT_GOALS[person] || {};
   const fmtc = (v,t)=> v+" / "+t;
@@ -479,7 +490,7 @@ function renderCasesList(cases){
 
 /* ── Team report ─────────────────────────────────────────── */
 function renderTeam(week){
-  const all = caseStats(casesFor(week, null));
+  const all = caseStats(casesFor(week, null), week);
   const totals = '<section class="card"><div class="eyebrow"><span class="dot"></span><span>Team totals this week</span></div>'+
     '<div class="mw-nums">'+
       '<div class="mw-num"><span>Open opportunities</span><b>'+all.opp+'</b></div>'+
@@ -489,7 +500,7 @@ function renderTeam(week){
     '</div></section>';
   // Leaderboard
   const lead = PEOPLE.map(function(p){
-    const st = caseStats(casesFor(week, p));
+    const st = caseStats(casesFor(week, p), week);
     const wk = weeklyFor(week, p);
     const g = AGENT_GOALS[p]||{};
     const goalsHit = [
