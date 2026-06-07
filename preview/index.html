@@ -1724,6 +1724,7 @@ function postCase(payload, done){
   const agentSel0 = document.getElementById("agent");
   if(agentSel0) agentSel0.addEventListener("change", syncSubmitterDefault);
   if(agentSel0) agentSel0.addEventListener("change", recalcFromCases);
+  if(agentSel0) agentSel0.addEventListener("change", function(){ if(agentSel0.value) load(); }); // auto Load/refresh on name select
   const statusEl = document.getElementById("tcStatus");
   const listEl   = document.getElementById("tcList");
   let editingId = null;
