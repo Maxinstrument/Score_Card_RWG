@@ -1542,15 +1542,18 @@ function recalcFromCases(){
 }
 // Hide the Daily Tally / worksheet on screen; reveal it only for printing.
 const dailyEl = document.getElementById("daily");
-if(dailyEl) dailyEl.classList.add("daily-hidden");
+function hideDaily(){ if(dailyEl) dailyEl.classList.add("daily-hidden"); document.body.classList.remove("print-tally"); }
+function showDailyForPrint(){ if(dailyEl) dailyEl.classList.remove("daily-hidden"); document.body.classList.add("print-tally"); }
+hideDaily();  // hidden on screen by default
+window.addEventListener("afterprint", hideDaily);             // primary re-hide
+if(window.matchMedia){
+  try { window.matchMedia("print").addEventListener("change", function(e){ if(!e.matches) hideDaily(); }); }
+  catch(_){ try { window.matchMedia("print").addListener(function(e){ if(!e.matches) hideDaily(); }); } catch(__){} }
+}
 $("btnPrint").addEventListener("click", () => {
-  if(dailyEl) dailyEl.classList.remove("daily-hidden");  // show for the print render
-  document.body.classList.add("print-tally");
+  showDailyForPrint();
   window.print();
-  window.addEventListener("afterprint", () => {
-    document.body.classList.remove("print-tally");
-    if(dailyEl) dailyEl.classList.add("daily-hidden");    // hide again on screen
-  }, { once: true });
+  setTimeout(hideDaily, 1500);   // fallback in case afterprint never fires (PDF/cancel)
 });
 
 /* ── Role-based view controller ─────────────────────────────── */
