@@ -646,6 +646,18 @@
   .tc-actions .tc-edit:hover{background:var(--field);}
   .tc-sort{ cursor:pointer; user-select:none; }
   .tc-sort:hover{ color:var(--navy); }
+  .tc-search{ display:flex; gap:8px; margin:4px 0 10px; flex-wrap:wrap; }
+  .tc-search input{ flex:1 1 240px; min-width:0; padding:9px 12px; border:1px solid var(--line); border-radius:9px; background:var(--field); color:inherit; font-size:14px; }
+  .tc-search button{ padding:9px 14px; border:1px solid var(--line); border-radius:9px; background:var(--navy); color:#fff; cursor:pointer; font-size:13px; }
+  .tc-search button:hover{ filter:brightness(1.15); }
+  .tc-search-results{ display:none; }
+  .tc-search-results.show{ display:block; margin:0 0 14px; }
+  .tcs-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:9px 11px; border:1px solid var(--line); border-radius:9px; margin-bottom:6px; background:var(--field); }
+  .tcs-name{ font-weight:600; }
+  .tcs-meta{ color:var(--muted); font-size:12.5px; }
+  .tcs-open{ margin-left:auto; padding:6px 12px; border:1px solid var(--gold); border-radius:8px; background:transparent; color:var(--navy); cursor:pointer; font-size:12.5px; white-space:nowrap; }
+  .tcs-open:hover{ background:var(--gold); color:#fff; }
+  .tcs-empty{ color:var(--muted); font-size:13px; padding:6px 2px; }
   .tc-actions .tc-del{color:var(--warn);border-color:rgba(176,105,31,.4);}
   .tc-actions .tc-del:hover{background:rgba(176,105,31,.08);}
   #tcAddBtn:hover{filter:brightness(1.12);}
@@ -950,6 +962,12 @@
       <button type="button" class="clog-add" id="tcLoadBtn">&#8635; Load / refresh</button>
       <span id="tcStatus" class="tc-status"></span>
     </div>
+    <div class="tc-search">
+      <input type="text" id="tcSearch" placeholder="&#128269; Find a past case by client name (any week)…" autocomplete="off">
+      <button type="button" id="tcSearchBtn">Search</button>
+      <button type="button" id="tcSearchClear" style="display:none;">Clear</button>
+    </div>
+    <div id="tcSearchResults" class="tc-search-results"></div>
     <div id="tcList" class="tc-list"></div>
 
     <div class="tc-add">
@@ -1734,6 +1752,8 @@ function postCase(payload, done){
   const statusEl = document.getElementById("tcStatus");
   const listEl   = document.getElementById("tcList");
   let editingId = null;
+  let editingCase = null;
+  let searchResults = [];
   let currentCases = [];
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]; }); }
   function money(n){ return "$"+Math.round(n||0).toLocaleString("en-US"); }
@@ -1812,9 +1832,7 @@ function postCase(payload, done){
     else if(so){ const k=so.getAttribute("data-sort"); if(sortKey===k) sortDir=-sortDir; else { sortKey=k; sortDir=1; } render(currentCases); }
   });
 
-  function startEdit(id){
-    const c = currentCases.find(function(x){ return String(x.record_id)===String(id); });
-    if(!c) return;
+  function openForEdit(c){
     document.getElementById("tcClient").value = c.client_name || "";
     const se = SOURCES.find(function(s){ return s.label===c.source; }); srcSel.value  = se ? se.id : "";
     const pe = TYPES.find(function(t){ return t.name===c.product; });   prodSel.value = pe ? pe.id : "";
@@ -1823,15 +1841,71 @@ function postCase(payload, done){
     document.getElementById("tcAum").value    = c.aum || "";
     if(submitterSel && c.submitting_agent) submitterSel.value = c.submitting_agent;
     editingId = c.record_id;
+    editingCase = c;
     document.getElementById("tcAddBtn").textContent = "Save changes";
     document.getElementById("tcCancelBtn").style.display = "";
     document.getElementById("tcAddStatus").textContent = "Editing " + (c.client_name||"case") + " ...";
     document.getElementById("tcClient").focus();
     document.getElementById("tcClient").scrollIntoView({block:"center"});
   }
+  function startEdit(id){
+    const c = currentCases.find(function(x){ return String(x.record_id)===String(id); });
+    if(c) openForEdit(c);
+  }
+
+  // ── Search any week for a case, then advance its stage ──
+  function renderSearchResults(list, q){
+    const box = document.getElementById("tcSearchResults");
+    box.classList.add("show");
+    document.getElementById("tcSearchClear").style.display = "";
+    if(!list.length){ box.innerHTML = '<div class="tcs-empty">No cases match &ldquo;'+esc(q)+'&rdquo;.</div>'; return; }
+    box.innerHTML = list.map(function(c){
+      const wk = c.week_ending ? ("opened "+c.week_ending) : "";
+      return '<div class="tcs-row">'+
+        '<span class="tcs-name">'+esc(c.client_name||"(no name)")+'</span>'+
+        '<span class="tc-pill '+esc(c.state||"")+'">'+esc(c.state||"")+'</span>'+
+        '<span class="tcs-meta">'+esc(c.product||"")+' &middot; '+esc(c.submitting_agent||"")+' &middot; '+esc(wk)+'</span>'+
+        '<button type="button" class="tcs-open" data-id="'+esc(c.record_id)+'">Open / advance</button>'+
+      '</div>';
+    }).join("");
+  }
+  function doSearch(){
+    const box = document.getElementById("tcSearchResults");
+    const q = document.getElementById("tcSearch").value.trim();
+    box.classList.add("show");
+    if(!q){ box.innerHTML = '<div class="tcs-empty">Type a client name to search.</div>'; return; }
+    box.innerHTML = '<div class="tcs-empty">Searching all weeks…</div>';
+    jsonpGetCases("", function(resp){
+      const all = (resp && resp.ok && resp.cases) ? resp.cases : [];
+      const ql = q.toLowerCase();
+      searchResults = all.filter(function(c){ return String(c.client_name||"").toLowerCase().indexOf(ql) >= 0; });
+      // Still-live deals (not Closed) first, then alphabetical by client.
+      searchResults.sort(function(a,b){
+        const al=(a.state==="Closed")?1:0, bl=(b.state==="Closed")?1:0;
+        if(al!==bl) return al-bl;
+        return String(a.client_name||"").toLowerCase().localeCompare(String(b.client_name||"").toLowerCase());
+      });
+      renderSearchResults(searchResults, q);
+    });
+  }
+  document.getElementById("tcSearchBtn").addEventListener("click", doSearch);
+  document.getElementById("tcSearch").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); doSearch(); } });
+  document.getElementById("tcSearchClear").addEventListener("click", function(){
+    document.getElementById("tcSearch").value = "";
+    const box = document.getElementById("tcSearchResults");
+    box.classList.remove("show"); box.innerHTML = "";
+    document.getElementById("tcSearchClear").style.display = "none";
+  });
+  document.getElementById("tcSearchResults").addEventListener("click", function(e){
+    const op = e.target.closest(".tcs-open");
+    if(!op) return;
+    const c = searchResults.find(function(x){ return String(x.record_id)===String(op.getAttribute("data-id")); });
+    if(c) openForEdit(c);
+  });
 
   function resetAddForm(){
     editingId = null;
+    editingCase = null;
     document.getElementById("tcClient").value="";
     document.getElementById("tcAmount").value="";
     document.getElementById("tcAum").value="";
@@ -1861,7 +1935,7 @@ function postCase(payload, done){
     if(!agent && !isEdit){ addStatus.textContent="Select your name first."; return; }
     const client = document.getElementById("tcClient").value.trim();
     if(!client){ addStatus.textContent="Enter a client name."; return; }
-    const orig = isEdit ? currentCases.find(function(x){ return String(x.record_id)===String(editingId); }) : null;
+    const orig = isEdit ? (editingCase || currentCases.find(function(x){ return String(x.record_id)===String(editingId); })) : null;
     const id = isEdit ? editingId : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ("id-"+Date.now()+"-"+Math.random().toString(36).slice(2)));
     let submitter;
     if(document.body.classList.contains("role-partner") && submitterSel && submitterSel.value){ submitter = submitterSel.value; }
